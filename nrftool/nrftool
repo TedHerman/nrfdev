@@ -1,0 +1,724 @@
+#!/usr/bin/env python
+from pyBusPirateLite.BitBang import *
+import time, sys, argparse
+
+'''
+ Define some constants for commands, registers, ARM/nRF5x;
+ these are implicitly global in scope.            
+'''
+# see http://dangerousprototypes.com/docs/Raw-wire_(binary) for details
+CMD_READ_BYTE =     "\x06"
+CMD_READ_BIT =      "\x07"
+CMD_WRITE_BYTES =   "\x10"
+CMD_CLOCK_TICKS =   "\x20"
+CMD_WRITE_BITS=     "\x30"
+CMD_CONFIG_PERIPH = "\x40"
+CMD_SET_SPEED =     "\x60"
+CMD_SET_CONFIG =    "\x80"
+
+# an enumeration of ARM and nRF51 registers
+IDCODE   = 1 
+ABORT    = 2
+CTRLSTAT = 3
+RESEND   = 4  
+SELECT   = 5 
+RDBUF    = 6 
+CSW      = 7     
+TAR      = 8
+DRW      = 9 
+IDR      = 10 
+CFG      = 11 
+BD0      = 12 
+BD1      = 13 
+BD2      = 14 
+BD3      = 15 
+BASE     = 16
+CODEPAGESIZE = 17
+CODESIZE = 18
+CLEN0    = 19
+DHCSR    = 20
+NVMC_READY = 21
+NVMC_CONFIG = 22
+NVMC_ERASEPAGE = 23
+NVMC_ERASEALL = 24
+
+# modes of port/memory
+DP       = 0
+AP       = 1
+FICR     = 2
+UICR     = 3
+SCS      = 4
+NVMC     = 5
+
+class regdesc(object):
+  def __init__(self,Id,Addr,Area):
+    assert Area in (DP,AP,FICR,UICR,SCS,NVMC)
+    self.Id,self.Addr,self.Area = Id, Addr, Area 
+    self.Base = {DP:0,AP:0,FICR:0x10000000,UICR:0x10001000,
+                 SCS:0xE000EDF0,NVMC:0x4001e000}[Area]
+regtable = [
+  regdesc(IDCODE,0,DP), 
+  regdesc(ABORT,0,DP), 
+  regdesc(CTRLSTAT,4,DP), 
+  regdesc(SELECT,8,DP), 
+  regdesc(RDBUF,0x0c,DP), 
+  regdesc(CSW,0,AP), 
+  regdesc(TAR,4,AP), 
+  regdesc(DRW,0x0c,AP), 
+  regdesc(BASE,0xf8,AP),
+  regdesc(IDR,0xfc,AP),
+  regdesc(CFG,0xf4,AP),
+  regdesc(BD0,0x10,AP),
+  regdesc(BD1,0x14,AP),
+  regdesc(BD2,0x18,AP),
+  regdesc(BD3,0x1c,AP),
+  regdesc(CODEPAGESIZE,0x010,FICR),
+  regdesc(CODESIZE,0x014,FICR),
+  regdesc(CLEN0,0x028,FICR),
+  regdesc(DHCSR,0,SCS),
+  regdesc(NVMC_READY,0x400,NVMC),
+  regdesc(NVMC_CONFIG,0x504,NVMC),
+  regdesc(NVMC_ERASEPAGE,0x508,NVMC),
+  regdesc(NVMC_ERASEALL,0x50c,NVMC),
+  ] 
+
+'''
+ Define state variables which are global in 
+ scope (use dictionaries as a trick so that 
+ none of these need to be declared global)
+''' 
+Current = True # another enumeration for readability
+banks_last = { Current: None }
+tar_last = { Current: None }
+# ack_queuesize = { Current: 0 }
+read_queue = { Current: list() }
+ack_queue = { Current: list() }
+data_queue = { Current: list() }
+command_queue = { Current: list() }  
+write_queue = { Current: list() }
+write_noack = { Current: 0 }
+last_op = { Current: None }
+B = { Current: None } # Bus Pirate Object
+args = { Current: None }
+
+def setByArgs():
+  '''
+  Gather command line arguments, validate them, and
+  set up the Bus Pirate Object
+  '''
+  if "-h" not in sys.argv and len(sys.argv) < 3: 
+    sys.stderr.write("Syntax for nrftool is:\n\tnrftool op dev\n\t\twhere 'op' is function (program, \
+info, masserase, download)\n\t\tand 'dev' is the Bus Pirate device, e.g. /dev/ttyUSB0\n\t\tExample: nrftool \
+info /dev/ttyUSB0\n\t\tThere is more documentation in the README.md\n")  
+    sys.exit(1)
+  parser = argparse.ArgumentParser(description='nRF51 tool in Python')
+  parser.add_argument("function",default=None,help='function is: program, info, masserase, download')
+  parser.add_argument('dev', metavar='device', help='system name for buspirate device, eg /dev/ttyUSB0')
+  parser.add_argument('--address',metavar='address',nargs=1,
+            default="0",help='upload start address for program function, or download start address')
+  parser.add_argument('--progfile',metavar='progfile',nargs=1,
+            default=None,help='binary file input (program to upload)')
+  parser.add_argument('--downloadfile',metavar='downloadfile',nargs=1,
+            default=None,help='file to store downloaded binary')
+  parser.add_argument('--downloadsize',metavar='downloadfile',nargs=1,
+            default="0",help='size limit on download size')
+  parser.add_argument('--debug',action="store_true",
+	    help='show low level debugging information')
+  args[Current] = parser.parse_args()
+     
+  if args[Current].function not in "program info masserase download".split():
+    sys.stderr.write("Command error: no valid function specified\n")
+    sys.stderr.write("\t(try one of: program, info, masserase, download)\n")
+    sys.exit(1)
+  try:
+    B[Current] = BBIO(p=args[Current].dev,s=115200,t=5)
+  except:
+    sys.stderr.write("Device error: {0} was not available (check permissions, etc)\n".format(args[Current].dev))
+    sys.exit(1)
+  if args[Current].address:   args[Current].address = args[Current].address[0]
+  if args[Current].progfile:  args[Current].progfile = args[Current].progfile[0]
+  if args[Current].downloadfile: args[Current].downloadfile = args[Current].downloadfile[0]
+  if args[Current].downloadsize: args[Current].downloadsize = args[Current].downloadsize[0]
+  if args[Current].address in ("s110","S110"): args[Current].address = "0x00018000"
+  if args[Current].address in ("s120","S120"): args[Current].address = "0x0001c000"
+  s,base = args[Current].address.strip(),10
+  if s.startswith("0x"): s,base = s[2:],16 
+  try:
+    args[Current].address = int(s,base)
+  except:
+    sys.stderr.write("Error trying to parse address '{0}'\n".format(args[Current].address))
+    sys.exit(1)
+  if args[Current].function == "program":
+    if not args[Current].progfile:
+      sys.stderr.write("missing --progfile for program operation\n".format(args[Current].address))
+      sys.exit(1)
+  if args[Current].function == "download":
+    if not args[Current].downloadfile:
+      sys.stderr.write("missing --downloadfile for download operation\n".format(args[Current].address))
+      sys.exit(1)
+    try:
+      with open(args[Current].downloadfile,'wb') as F:
+        F.write("\x00")
+    except:
+      sys.stderr.write("Error trying to write downloadfile '{0}'\n".format(args[Current].downloadfile))
+      sys.exit(1)
+    s,base = args[Current].downloadsize.strip(),10
+    if s.startswith("0x"): s,base = s[2:],16 
+    try:
+      args[Current].downloadsize = int(s,base)
+    except:
+      sys.stderr.write("Error trying to parse downloadsize '{0}'\n".format(args[Current].downloadsize))
+      sys.exit(1)
+
+#################################################################################################
+#                                                                                               #
+#  Functions here deal with the Bus Pirate Object (BB means Bit-Bang)                           #
+#                                                                                               #
+#################################################################################################
+
+def BBclear():
+  "Kind of an unknown state clearing of the BusPirate port"
+  while B[Current].port.inWaiting():
+    b = B[Current].port.read(1)
+
+def BBwriteGetAck(bytestr):  
+  "write contents of bytestr, collect acks"
+  B[Current].port.write(bytestr)
+  BBgetacks(len(bytestr))
+
+def BBxmit(bytestring,suppressack=False,endcmd=False):
+  "send a string of bytes on the port"
+  # sys.stdout.write("** BBxmit for {0}".format(repr(bytestring)))
+  # sys.stdout.write(" read_queue = {0}".format(read_queue[Current]))
+  # sys.stdout.write(" suppressack = {0}\n".format(suppressack))
+  # sys.stdout.flush()
+  write_queue[Current].append(bytestring)
+  if suppressack:
+    write_noack[Current] += len(bytestring)   # invisible bytes
+  else:
+    read_queue[Current].extend(len(bytestring)*[1])
+  if endcmd:
+    xmit = ''.join(write_queue[Current]) 
+    assert len(xmit)-write_noack[Current] <= 16
+    if len(xmit) > write_noack[Current]:
+       # assumption: all invisible bytes are on trailing end of xmit 
+       firstByte = chr(ord(CMD_WRITE_BYTES) + len(xmit)-write_noack[Current]-1)
+       xmit = firstByte + xmit
+       read_queue[Current].append(1)
+    command_queue[Current].append(xmit) 
+    xmit = ''
+    write_noack[Current] = 0
+    write_queue[Current] = list()
+
+def BBflush():
+  # now actually send all the backlog
+  allxmit = ''.join(command_queue[Current])
+  if not allxmit: return
+  if args[Current].debug:
+    sys.stdout.write("port >")
+    [ sys.stdout.write(" {0:02x}".format(ord(e))) for e in allxmit ] 
+    sys.stdout.write(" expecting {0} acks\n".format(read_queue[Current]))
+    sys.stdout.flush()
+  B[Current].port.write(allxmit)
+  B[Current].port.flush()
+  command_queue[Current] = list()
+
+def BBconsume():
+  msgActive = False
+  while True:
+    if not read_queue[Current]: break
+    while read_queue[Current] and read_queue[Current][0] == 1:
+      if args[Current].debug and not msgActive:
+        sys.stdout.write("port <")
+        msgActive = True
+      b = B[Current].response(1)
+      if args[Current].debug:
+        sys.stdout.write(" {0:02x}".format(b))
+      assert b == 1
+      del read_queue[Current][0]
+    if not read_queue[Current]: break
+    assert read_queue[Current][0] in (2,3,4)
+    if len(read_queue[Current]) > 4 and read_queue[Current][:5] == [3,3,3,3,4]:
+      if args[Current].debug and not msgActive:
+        sys.stdout.write("port <")
+        msgActive = True
+      word = B[Current].response(4)
+      if args[Current].debug:
+        [ sys.stdout.write(" {0:02x}".format(ord(e))) for e in word ]
+      parity = B[Current].response(1)
+      if args[Current].debug:
+        sys.stdout.write(" {0:02x}".format(parity))
+      del read_queue[Current][:5]
+      data_queue[Current].extend(c for c in word)
+      data_queue[Current].append(parity)
+    while read_queue[Current] and read_queue[Current][0] in (2,3):
+      if args[Current].debug and not msgActive:
+        sys.stdoutwrite("port <")
+        msgActive = True
+      b = B[Current].response(1)
+      if read_queue[Current][0] == 2:
+        if args[Current].debug:
+          sys.stdout.write(" {0:02x}".format(b))
+        del read_queue[Current][0]
+        ack_queue[Current].append(b)
+        if len(ack_queue[Current]) >= 3:
+          BBackValidate()
+      elif read_queue[Current][0] == 3:
+        if args[Current].debug:
+          sys.stdout.write(" {0:02x}".format(ord(b)))
+        del read_queue[Current][0]
+        data_queue[Current].append(b)
+  if args[Current].debug and msgActive:
+    sys.stdout.write("\n")
+    sys.stdout.flush()
+
+def BBgetacks(n):
+  if defer:
+    read_queue[Current].extend(n*[1])
+    return
+
+def BBackValidate():
+  assert tuple(ack_queue[Current][:3]) == (1,0,0)
+  del ack_queue[Current][:3]
+
+def BBackcmd():
+  BBxmit(CMD_READ_BIT*3,suppressack=True,endcmd=True)
+  read_queue[Current].extend([2,2,2])
+
+def BBsetup():
+  "Establish Bus Pirate BitBang Connection"
+  assert B[Current].resetBP()
+  assert B[Current].BBmode()
+  assert B[Current].enter_rawwire()
+  BBxmit("\x8a\x63\x48",suppressack=True,endcmd=True)  # configure Bus Pirate
+  read_queue[Current].extend([1,1,1])
+  BBflush()
+  BBconsume()
+  # 8a = configure 3.3v, 2-wire, LSB first 
+  # 63 = set 400kHz timing
+  # 48 = configure as peripherals have power 
+
+##### Some Utility Functions ####################################################################
+def revbits(x):  # reverse the bits of x
+  x = ord(x)
+  r = x & 1 
+  for i in range(7):
+    r = r << 1
+    x = x >> 1 
+    r = r | (x & 1) 
+  return chr(r)
+
+def Parity(word):
+  parity = word
+  parity = parity ^ (parity >> 16)
+  parity = parity ^ (parity >> 8)
+  parity = parity ^ (parity >> 4)
+  parity = parity ^ (parity >> 2)
+  parity = parity ^ (parity >> 1)
+  return parity & 0x01
+
+def writeprogram(program):
+  page = args[Current].address
+  sys.stdout.write("\n")
+  sys.stdout.flush()
+  r = 0x80 
+  while r & 0x80: r = Read(CSW)
+  for chunk in program:
+    erasePage(page)
+    writePage(page,chunk)
+    page += 0x400 
+  time.sleep(0.01) # settling time?
+  for i in range(3):
+    Write(DHCSR,0xa05f0000)  # clear halt bit (seems to require a few writes to do this)
+  sys.stdout.write("\n")
+  sys.stdout.flush()
+    
+#################################################################################################
+#                                                                                               #
+#  SWD Read or Write Register (general for any register set);                                   # 
+#    This is followed by some friendlier functions that call this one in specific ways          # 
+#                                                                                               #
+#################################################################################################
+def ARMSWD_command(Register=0,Value=0,DP=True,Read=True):
+  # Value - reverse order (LSB first) and convert to byte string
+  byteString  = chr(Value & 0xff)
+  byteString += chr((Value >> 8) & 0xff)
+  byteString += chr((Value >> 16) & 0xff)
+  byteString += chr((Value >> 24) & 0xff)
+  basecmd = "\x81"
+  addrbits = {0:"\x00", 4:"\x10", 8:"\x08", 0xC:"\x18"}[Register]
+  dpap = "\x00"
+  if not DP: dpap = "\x40"
+  oper = "\x00"
+  if Read:   oper = "\x20"
+  parity = ord(addrbits) | ord(dpap) | ord(oper) 
+  parity = chr(parity >> 3)
+  if parity in ("\x00","\x0f","\x0a","\x09","\x0c","\x06","\x05","\x03"):
+     parity = "\x00"
+  else: parity = "\x04"
+  command = ord(basecmd) | ord(parity) | ord(dpap) | ord(addrbits) | ord(oper)
+  command = chr(command)
+  if Read:
+     if last_op[Current] == "Read":
+       BBflush()
+       BBconsume()
+       BBxmit(chr(ord(CMD_CLOCK_TICKS)|0x01),suppressack=True,endcmd=True)
+       read_queue[Current].append(1)
+     BBxmit(revbits(command),endcmd=True)
+     BBackcmd()
+     R = readWordParity()
+     last_op[Current] = "Read"
+     return R
+  else:
+     if last_op[Current] == "Read":
+       BBflush()
+       BBconsume()
+       BBxmit(chr(ord(CMD_CLOCK_TICKS)|0x01),suppressack=True,endcmd=True)
+       read_queue[Current].append(1)
+     BBxmit(revbits(command),endcmd=True)
+     BBackcmd()
+     BBflush()
+     BBconsume()
+     BBxmit(chr(ord(CMD_CLOCK_TICKS)|0x01),suppressack=True,endcmd=True)
+     read_queue[Current].append(1)
+     BBxmit(byteString)
+     BBxmit(CMD_WRITE_BITS,suppressack=True) 
+     if Parity(Value): BBxmit("\x80",suppressack=True)
+     else:             BBxmit("\x00",suppressack=True)
+     read_queue[Current].extend([1,1])
+     BBxmit('',endcmd=True)
+     last_op[Current] = "Write"
+
+def ARMdpRead(Register=0):
+  v = Register
+  R = ARMSWD_command(Register=v,Value=0,DP=True,Read=True)
+  if args[Current].debug: sys.stdout.write("Read of DP Register {0:02x} ".format(v))
+  if args[Current].debug: sys.stdout.write("--> {0:08x}\n".format(R))
+  return R
+
+def ARMapRead(Register=0):
+  v = Register
+  R = ARMSWD_command(Register=v,Value=0,DP=False,Read=True)
+  if args[Current].debug: sys.stdout.write("Read of AP Register {0:02x} ".format(v))
+  if args[Current].debug: sys.stdout.write("--> {0:08x}\n".format(R))
+  return R
+
+def ARMdpWrite(Register=0,Value=None):
+  v,w = Register,Value
+  R = ARMSWD_command(Register=v,Value=w,DP=True,Read=False)
+  if args[Current].debug: sys.stdout.write("Write of DP Register {0:02x} ".format(v))
+  if args[Current].debug: sys.stdout.write("<-- {0:08x}\n".format(w))
+  return R
+
+def ARMapWrite(Register=0,Value=None):
+  v,w = Register,Value
+  R = ARMSWD_command(Register=v,Value=w,DP=False,Read=False)
+  if args[Current].debug: sys.stdout.write("Write of AP Register {0:02x} ".format(v))
+  if args[Current].debug: sys.stdout.write("<-- {0:08x}\n".format(w))
+  return R
+
+#################################################################################################
+#                                                                                               #
+#  Read a 4-byte word of a register (assume that a previous command already specified           #
+#  which register to read) and verify the parity of what was read, returning the value.         #
+#                                                                                               #
+#################################################################################################
+def readWordParity():
+  BBflush()
+  BBconsume()
+  readSequence = CMD_READ_BYTE*4 + CMD_READ_BIT
+  BBxmit(readSequence,suppressack=True,endcmd=True)
+  read_queue[Current].extend(4*[3]+[4])
+  BBflush()
+  BBconsume()
+  sword = data_queue[Current][:4][::-1]
+  parity = data_queue[Current][4]
+  del data_queue[Current][:5]
+  word = sum( ord(sword[i])*256**(3-i) for i in range(4) ) 
+  assert Parity(word) == parity
+  return word
+
+def AHB_AP_init():
+  Write(ABORT,0x1e)
+  BBflush()
+  BBconsume()
+  Write(SELECT,0)
+  BBflush()
+  BBconsume()
+  Write(CTRLSTAT,0x50000000)
+  BBflush()
+  BBconsume()
+  R = Read(CTRLSTAT)
+  assert R == 0xf0000000L
+  R = Read(IDR)
+  assert R == 0x4770021
+  R = Read(CSW)
+  Write(CSW,0x03000052)
+  BBflush()
+  BBconsume()
+  R = Read(CSW)
+  assert R == 0x03000052
+
+#################################################################################################
+#                                                                                               #
+#  Read an arbitrary register. Depending on which type of register is read, this might need     #
+#  several lower-level operations to write the desired AP register bank, write the TAR          #
+#  in order to fetch from RAM, and so on. Reading a manual is necessary to follow all the       #
+#  logic behind this code. One happy case is reading the next word in RAM, because the          #
+#  TAR register auto-increments.                                                                #
+#                                                                                               #
+#################################################################################################
+def Read(register):
+  for e in regtable:   
+    if e.Id == register:
+      break 
+  assert e.Id == register
+  if e.Area == DP:
+    return ARMdpRead(Register=e.Addr)
+  if e.Area == AP:
+    bank = e.Addr & 0xf0;
+    if banks_last[Current] != bank:
+      ARMdpWrite(Register=0x08,Value=bank)
+      banks_last[Current] = bank
+    ARMapRead(Register=(e.Addr & 0x0f))
+    return ARMdpRead(Register=0x0c)
+  if e.Area in (FICR,UICR,SCS,NVMC):
+    base = e.Base
+    align = e.Addr & 0xfffffff0
+    if not tar_last[Current] or \
+       tar_last[Current] & 0xfffffff0 != base+align: 
+       Write(TAR,base+align) 
+       tar_last[Current] = base+align
+    if banks_last[Current] != 0x10:
+      ARMdpWrite(Register=0x08,Value=0x10)
+      banks_last[Current] = 0x10 
+    ARMapRead(Register=(e.Addr & 0x0f))
+    tar_last[Current] += 4
+    if tar_last[Current] % 1024 == 0: tar_last[Current] = -1
+    return Read(RDBUF)
+  assert False
+
+#################################################################################################
+#                                                                                               #
+#  Write a register with a value. Depending on which type of register is to be written,         #
+#  several lower-level operations may be needed (see comment on Read() above).                  # 
+#                                                                                               #
+#################################################################################################
+def Write(register,value):
+  for e in regtable:   
+    if e.Id == register:
+      break 
+  assert e.Id == register
+  if e.Area == DP:
+    return ARMdpWrite(Register=e.Addr,Value=value)
+  if e.Area == AP:
+    bank = e.Addr & 0xf0;
+    if banks_last[Current] != bank:
+      ARMdpWrite(Register=0x08,Value=bank)
+      banks_last[Current] = bank
+    ARMapWrite(Register=(e.Addr & 0x0f),Value=value)
+    return
+  if e.Area in (FICR,UICR,SCS,NVMC):
+    base = e.Base
+    align = e.Addr & 0xfffffff0
+    if not tar_last[Current] or \
+       tar_last[Current] & 0xfffffff0 != base+align: 
+       Write(TAR,base+align) 
+       tar_last[Current] = base+align
+    if banks_last[Current] != 0x10:
+      ARMdpWrite(Register=0x08,Value=0x10)
+      banks_last[Current] = 0x10 
+    ARMapWrite(Register=(e.Addr & 0x0f),Value=value)
+    tar_last[Current] += 4
+    if tar_last[Current] % 1024 == 0: tar_last[Current] = -1
+    return 
+  assert False
+
+#################################################################################################
+#                                                                                               #
+#  Procedure to read ROM (Flash). Uses args[Current].downloadsize as a size limit, though       #
+#  if that's not given, it will try to guess.                                                   # 
+#                                                                                               #
+#################################################################################################
+def readFlash():
+
+  Memory = list() 
+  zerocount = 0
+  page = args[Current].address  # start address in ROM
+  building = True
+  sys.stdout.write("\n")
+  sys.stdout.flush()
+
+  while building:
+    
+    Write(TAR,page)
+    Page = list()
+    while len(Page) < 1024:
+      R = Read(DRW)
+      Page.append(chr(R&0xff))
+      Page.append(chr((R>>8)&0xff))
+      Page.append(chr((R>>16)&0xff))
+      Page.append(chr((R>>24)&0xff))
+
+    if not args[Current].downloadsize and all(c=="\xff" for c in Page): building = False
+    sys.stdout.write("\rGot page {0:08x} ".format(page))
+    sys.stdout.flush()
+    page += 1024
+    Memory.extend(Page)
+    if len(Memory) >= args[Current].downloadsize: break
+
+  sys.stdout.write("\n")
+  sys.stdout.flush()
+
+  if args[Current].downloadsize:
+    ffcount = 0
+    for i in range(-1,-len(Memory),-1):
+      if Memory[i] != "\xff": break
+      ffcount += 1
+    Memory = Memory[:1+len(Memory)-1-ffcount]
+
+  return ''.join(Memory)
+
+#################################################################################################
+#                                                                                               #
+#  Erase a given page (necessary before writing to the page, due to NAND-flash technology)      #
+#                                                                                               #
+#################################################################################################
+def erasePage(page):
+  assert Read(NVMC_READY) != 0
+  Write(NVMC_CONFIG,0x00000002)  # set CONFIG.EEN (enable erase)
+  # sys.stdout.write("Erasing page {0:08x}\n".format(page))
+  Write(NVMC_ERASEPAGE,page)
+  while True:
+    r = Read(NVMC_READY)
+    if r: return 
+
+#################################################################################################
+#                                                                                               #
+#  Write a page.                                                                                #
+#                                                                                               #
+#################################################################################################
+def writePage(page,value):
+  if not value: return
+  assert len(value) <= 1024
+  wordlist = [ value[i:4+i] for i in range(0,len(value),4) ] 
+  if len(wordlist[-1]) != 4: wordlist[-1] = (wordlist[-1] + "\x00\x00\x00\x00")[:4]
+  Write(NVMC_CONFIG,0x00000001)  # set CONFIG.EW (enable write)
+  sys.stdout.flush()
+  sys.stdout.write("\rWriting page {0:08x} ".format(page))
+  sys.stdout.flush()
+  Write(TAR,page) 
+  for word in wordlist: 
+    # r = 0x80 
+    # while r & 0x80: r = Read(CSW)
+    # reverse order of bytes in word for nRF5x 
+    v  = ord(word[3]) << 24
+    v |= ord(word[2]) << 16
+    v |= ord(word[1]) << 8
+    v |= ord(word[0])
+    #  sys.stdout.write("\t\tWriting {0:08x}\n".format(v))
+    Write(DRW,v)
+
+#################################################################################################
+#                                                                                               #
+#  Setup functions, needed to set up Bus Pirate raw mode, set up SWD with nRF5x, setup up       #
+#  the NVMC for reading and writing, etc. Consult various manuals to understand this stuff.     #
+#                                                                                               #
+#################################################################################################
+def progSetup():
+  r = Read(DHCSR)
+  # sys.stdout.write("DHCSR = {0:08x}\n".format(r))
+  Write(DHCSR,0xa05f0000)
+  Write(DHCSR,0xa05f0001)
+  Write(DHCSR,0xa05f0003)
+  r = Read(DHCSR)
+  # sys.stdout.write("DHCSR = {0:08x}\n".format(r))
+  r = Read(DHCSR)
+  # sys.stdout.write("(again) DHCSR = {0:08x}\n".format(r))
+
+#  Initialize SWD Interface                                                                     #
+def ARM_init():
+  '''
+  According to SiLabs Document AN0062 
+   "Programming Internal Flash Over the Serial Wire Debug Interface"
+  there are four steps to initialize ARM programming:
+    1. perform a line reset
+    2. send the JTAG-to-SWD switching sequence
+    3. perform a line reset 
+    4. read the ICODE register
+  where a line reset is performed by clocking at least 50 cycles with
+  the SWDIO line kept high 
+  '''
+  BBxmit("\xff"*7,endcmd=True)   # line reset
+  BBflush(); BBconsume();
+  BBxmit("\x9e\xe7",endcmd=True) # JTAG-to-SWD (LSB first) 
+  BBflush(); BBconsume();
+  BBxmit("\xff"*7,endcmd=True)   # line reset
+  BBflush(); BBconsume();
+  BBxmit("\x00",endcmd=True)     # switch to bitbang mode 
+  BBflush(); BBconsume();
+  R = Read(IDCODE)
+  assert R == 0xbb11477
+
+#################################################################################################
+#                                                                                               #
+#  Main operations of nrftool, either info, download, program, or masserase                     # 
+#                                                                                               #
+#################################################################################################
+def function_info():
+  sys.stdout.write("CODEPAGESIZE = {0}\n".format(Read(CODEPAGESIZE)))
+  sys.stdout.write("CODESIZE = {0} pages\n".format(Read(CODESIZE)))
+  sys.stdout.write("CLEN0 = {0}\n".format(Read(CLEN0)))
+
+def function_download():
+  binary = readFlash()
+  try:
+    with open(args[Current].downloadfile,'wb') as F:
+      F.write(binary)
+  except:
+    sys.stderr.write("Error trying to write downloadfile '{0}'\n".format(args[Current].downloadfile))
+    sys.exit(1)
+
+def function_program():
+  progSetup()
+  try:
+    with open(args[Current].progfile,'rb') as F:
+      binary = F.read()
+      program = [binary[i:i+1024] for i in range(0,len(binary),1024)]
+  except:
+    sys.stderr.write("Unable to read file '{0}' (binary to upload)\n".format(args[Current].progfile))
+    sys.exit(1)
+  writeprogram(program)
+
+def function_masserase():
+  progSetup()
+  assert Read(NVMC_READY) != 0
+  Write(NVMC_CONFIG,0x00000002)  # set CONFIG.EEN (enable erase)
+  Write(NVMC_ERASEALL,1)
+  while True:
+    sys.stdout.flush()
+    sys.stdout.write("\rWaiting for flash erase-all to finish ...")
+    sys.stdout.flush()
+    time.sleep(0.01*128) # 0.01 per page, 1kB/page, 128kB flash to erase
+    r = Read(NVMC_READY)
+    if r: 
+      sys.stdout.write("\n")
+      return 
+
+#################################################################################################
+#                                                                                               #
+#  Main entry to nrftool.                                                                       # 
+#                                                                                               #
+#################################################################################################
+def main():
+  setByArgs()
+  BBsetup()
+  ARM_init()
+  AHB_AP_init()
+  {'info':function_info,
+   'masserase':function_masserase,
+   'program':function_program,
+   'download':function_download}[args[Current].function]()
+  sys.stdout.write("Done.\n")
+
+if __name__ == "__main__": main()

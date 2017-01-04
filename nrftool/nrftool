@@ -41,6 +41,8 @@ NVMC_READY = 21
 NVMC_CONFIG = 22
 NVMC_ERASEPAGE = 23
 NVMC_ERASEALL = 24
+DEMCR    = 25
+AIRCR    = 26
 
 # modes of port/memory
 DP       = 0
@@ -49,13 +51,14 @@ FICR     = 2
 UICR     = 3
 SCS      = 4
 NVMC     = 5
+SCB      = 6
 
 class regdesc(object):
   def __init__(self,Id,Addr,Area):
-    assert Area in (DP,AP,FICR,UICR,SCS,NVMC)
+    assert Area in (DP,AP,FICR,UICR,SCS,NVMC,SCB)
     self.Id,self.Addr,self.Area = Id, Addr, Area 
     self.Base = {DP:0,AP:0,FICR:0x10000000,UICR:0x10001000,
-                 SCS:0xE000EDF0,NVMC:0x4001e000}[Area]
+                 SCS:0xE000EDF0,NVMC:0x4001e000,SCB:0xE000ED00}[Area]
 regtable = [
   regdesc(IDCODE,0,DP), 
   regdesc(ABORT,0,DP), 
@@ -80,6 +83,8 @@ regtable = [
   regdesc(NVMC_CONFIG,0x504,NVMC),
   regdesc(NVMC_ERASEPAGE,0x508,NVMC),
   regdesc(NVMC_ERASEALL,0x50c,NVMC),
+  regdesc(DEMCR,0x0c,SCS),
+  regdesc(AIRCR,0x0c,SCB),
   ] 
 
 '''
@@ -278,6 +283,8 @@ def BBgetacks(n):
     return
 
 def BBackValidate():
+  if tuple(ack_queue[Current][:3]) != (1,0,0):
+    sys.stdout.write("Unexpected ack: {0}\n".format(ack_queue[Current][:3]))
   assert tuple(ack_queue[Current][:3]) == (1,0,0)
   del ack_queue[Current][:3]
 
@@ -626,15 +633,17 @@ def writePage(page,value):
 #                                                                                               #
 #################################################################################################
 def progSetup():
-  r = Read(DHCSR)
-  # sys.stdout.write("DHCSR = {0:08x}\n".format(r))
-  Write(DHCSR,0xa05f0000)
-  Write(DHCSR,0xa05f0001)
-  Write(DHCSR,0xa05f0003)
-  r = Read(DHCSR)
-  # sys.stdout.write("DHCSR = {0:08x}\n".format(r))
-  r = Read(DHCSR)
-  # sys.stdout.write("(again) DHCSR = {0:08x}\n".format(r))
+  for i in range(1024):
+    try:
+      Write(DHCSR,0xa05f0003)
+      r = Read(DHCSR)
+      Write(DEMCR,1)  # see AN0062   
+      return
+    except:
+      ARM_init()
+      AHB_AP_init()
+
+  #Write(AIRCR,0xfa050004)
 
 #  Initialize SWD Interface                                                                     #
 def ARM_init():
@@ -680,7 +689,6 @@ def function_download():
     sys.exit(1)
 
 def function_program():
-  progSetup()
   try:
     with open(args[Current].progfile,'rb') as F:
       binary = F.read()
@@ -691,7 +699,6 @@ def function_program():
   writeprogram(program)
 
 def function_masserase():
-  progSetup()
   assert Read(NVMC_READY) != 0
   Write(NVMC_CONFIG,0x00000002)  # set CONFIG.EEN (enable erase)
   Write(NVMC_ERASEALL,1)
@@ -715,6 +722,7 @@ def main():
   BBsetup()
   ARM_init()
   AHB_AP_init()
+  progSetup()
   {'info':function_info,
    'masserase':function_masserase,
    'program':function_program,

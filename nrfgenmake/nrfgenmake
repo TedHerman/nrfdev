@@ -1,0 +1,335 @@
+#!/usr/bin/env python
+import sys, os, re, itertools, json
+
+'''
+TODO
+
+  There are three modes (so far) for the nrf51 family
+    
+    Blank alone, eg see Blinky in examples/peripheral
+    S110 (peripheral), eg see Clock in examples/ble_peripheral
+    S120 (central), eg see Basestation in examples/ble_central
+
+  So far, this is hardcoded to make S110 work
+
+TODO
+
+  Distinguish between different bsp directories for header
+  files, eg examples/bsp versus examples/peripheral/bsp
+  It seems like examples/bsp is the one used for S110
+
+TODO
+
+  How to take all the stuff here, as well as in other places
+  like local config directory, ld file, and customize those
+  in the Makefile, where Makefile.in is the "pattern" source
+
+TODO
+  
+  Either process header files for #include statements (easy,
+  but prone to failure if there are #ifdef kinds of conditionals),
+  or perhaps just force these to be included
+
+  #include "nrf51.h"
+  #include "core_cm0.h"
+  #include "system_nrf51.h"
+
+TODO
+
+  Allow for an exclusion-override. What broke the Makefile were
+  these implied C source files, 
+
+  /opt/nordic/components/libraries/timer/app_timer_rtx.c
+  /opt/nordic/components/libraries/timer/app_timer_freertos.c
+
+  Probably some conditional processing would have normally omitted
+  these -- but an exclusion like "app_timer_*" would have prevented
+  this.
+
+'''
+
+
+NordicTypes = ("uint32_t","ret_code","void","bool")
+
+class options(object): 
+  '''
+  Read JSON-encoded options from config/options.json, to get paramaters:
+    - "nordicbase" is the root of the Nordic software distribution, e.g. /arm/opt/nordic
+    - "source" is the name of the main sourcefile (TODO someday, allow for multiple sources)
+    - "excludes" is a list of files to exclude, like ["device_manager_central.c","app_uart_fifo.c"]
+    - "includes" is a list of files to force into the Makefile, 
+          like ["nrf51.h","core_cm0.h","system_nrf51.h","bsp.c"]
+    - "platform" is a Nordic platform name, like "pca10028"
+    - "softdevice" is one of ("blank","s110","s120","s130") as defined by Nordic SDK
+  '''
+  def __init__(self):
+    with open("config/options.json") as F:
+      O = json.load(F)
+    self.nordicbase = str(O['nordicbase']) 
+    self.source = str(O['source'])
+    self.excludes = [str(s) for s in O['excludes']]
+    self.includes = [str(s) for s in O['includes']]
+    self.platform = str(O['platform'])
+    self.softdevice = str(O['softdevice'])
+
+class cobook(object):
+  '''
+  Globally available class to contain cache of Nordic directory,
+  dictionary of header files discovered in C source file(s) and 
+  the status of each (queued, processed), and a dictionary of C
+  files implied by the header files
+  ''' 
+  def __init__(self,includes=[],excludes=[],sourcefile='',platform='',
+                    nordicbase='',softdevice=''):
+    '''
+    parameters are list of includes, list of excludes, sourcefile, 
+                   platform, and softdevice
+    '''
+    self.nordicbase = nordicbase
+    self.includes = includes
+    self.excludes = excludes
+    self.sourcefile = sourcefile
+    self.platform = platform
+    self.softdevice = softdevice
+
+    # three attributes which span all of the Nordic directory
+    self.NordicDir = list()        # used to terminate recursion
+    self.NordicHFiles = dict()     # map foo.h -> /opt/nordic/etc/foo.h 
+    self.NordicCFiles = dict()     # map foo.c -> /opt/nordic/etc/foo.c
+    # these attributes only span as generated from a root C-file 
+    self.NordicCHeaders = dict()   # map foo.c -> set(header file names)
+    self.NordicHFunctions = dict() # map foo.h -> set(guessed functions)
+    self.NordicFunctions = set()   # union of all guessed functions
+    self.NordicHSiblings = dict()  # map foo.h -> list(companion C files)
+    self.walk(self.nordicbase+"/examples/bsp") # add board definitions to software stack
+    self.walk(self.nordicbase+"/components")   # populate NordicDir, HFiles, CFiles
+    self.findsoftdevice(self.nordicbase)       # find and remember softdevice binaries
+
+  def walk(self,base):
+    '''
+    build out the attributes which span the Nordic directory,
+    recording into Dir, HFiles and CFiles, using recursion as 
+    appropriate -- this makes later searching more efficient 
+    '''
+    if base in self.NordicDir: return
+    try: os.listdir(base)
+    except OSError: return
+    self.NordicDir.append(base)
+    subdirs = os.listdir(base)
+    for name in subdirs:
+      if self.softdevice == "blank" and name in ("softdevice","s110","s120","s130"):
+         continue
+      if name.endswith(".h"): self.NordicHFiles[name] = base+os.sep+name
+      if name.endswith(".c"): self.NordicCFiles[name] = base+os.sep+name
+    for name in subdirs: 
+      if self.softdevice == "blank" and name in ("softdevice","s110","s120","s130"):
+         continue
+      self.walk(base+os.sep+name)
+
+  def findsoftdevice(self,base):
+    ''' 
+    find locations of s110 and s120 binaries, possibly needed for flashing
+    '''
+    s110base = base+os.sep+"components/softdevice/s110/hex"
+    s120base = base+os.sep+"components/softdevice/s120/hex"
+    s110dir = [e for e in os.listdir(s110base) if e.endswith(".bin")]
+    s120dir = [e for e in os.listdir(s120base) if e.endswith(".bin")]
+    assert len(s110dir) == 1
+    assert len(s120dir) == 1
+    self.s110bin = s110base + os.sep + s110dir[0]
+    self.s120bin = s120base + os.sep + s120dir[0]
+
+  def explore(self,cfile):
+    '''
+    starting with a given C source file, 
+      (1) if it's been seen before, ignore this C file & return
+      (2) extract its needed header files; 
+      (3) for each header file, if it's been seen already, skip;
+      (4) for new one, guess it's functions, and find its C-source siblings 
+      (5) remove from the guessed functions any which are globally known
+      (6) for each C-source sibling, guess its functions 
+      (7) if the guesses of the header and a sibling overlap, 
+          then schedule that sibling for a later visit by this method
+    that's the general outline of what do to, with some amendments:
+      + remember to add to CHeaders, HFunctions, Functions, HSiblings
+        along the way (as appropriate)
+      + might generate collision warnings, say, if siblings have
+        the same function definitions - would be a failing of this 
+        type of automation (without further inputs saying which to use)
+    '''
+    if cfile in self.excludes: return
+    if cfile not in self.NordicCFiles: # initial case is a user file in own space
+       # start with forced includes
+       dependencies = list(e for e in self.includes if e.endswith(".h"))    
+       dependencies.extend(self.get_includes(cfile)) # list of included .h files
+    else:
+       if cfile in self.NordicCHeaders: return   # duplicate request
+       dependencies = self.get_includes(self.NordicCFiles[cfile]) # list of included .h files
+    unknown = [e for e in dependencies if e not in self.NordicHFiles]
+    if unknown:
+      # warn in case an include goes outside of Nordic space
+      # sys.stderr.write("{0} asks for {1} from unknown place\n".format(cfile,unknown)) 
+      pass
+    self.NordicCHeaders[cfile] = dependencies # record for future
+    # for each header file in dependencies, queue any new C-files it implies
+    queue = [ self.getsiblings(h) for h in dependencies ]
+    # force any mandatory includes which are C source files to be in the queue
+    queue.append([fname for fname in self.includes if fname.endswith(".c")])
+    queue = list(itertools.chain.from_iterable(queue)) # idiom to flatten list of lists
+    # and finally, recurse to process all new C source files discovered
+    for item in queue: self.explore(item)
+  
+  def getsiblings(self,hfile):
+    '''
+    with a given header file like foo.h, find its directory, then also find
+    any C source file in that same directory; cull the list of such C files
+    to be those with some overlap in what functions they define versus what
+    the header file also defines (probability is that header needs that C file).
+    The return the curated list of the C files.
+    '''
+    if hfile not in self.NordicHFiles: return [] 
+    if hfile in self.NordicHSiblings:  return []
+    if hfile in self.NordicHFunctions: return []  # already done previously
+    location = self.NordicHFiles[hfile] 
+    location = location[:-len(hfile)]  # this is the directory to search
+    candidates = [e for e in self.NordicCFiles 
+                    if self.NordicCFiles[e] == location+e]
+    availfns = { e:set(self.fn_guesses(self.NordicCFiles[e])) for e in candidates }
+    # now is a good time to check for collisions
+    for a in availfns:
+      for b in availfns:
+        if a==b: continue
+        if a> b: continue  # try to avoid duplicate complaints
+        if availfns[a]&availfns[b]:
+          #sys.stderr.write("possible function collision: {0} & {1} on {2}\n"
+          #   .format(a,b,availfns[a]&availfns[b]))
+          pass
+    # which of the siblings might be needed?
+    neededfns = set(self.fn_guesses(self.NordicHFiles[hfile]))  
+    self.NordicHFunctions[hfile] = neededfns # record for future reference
+    curated = list()
+    for c in candidates: 
+      if availfns[c]&neededfns: curated.append(c)
+    # before returning curated list, update Functions, and HSiblings
+    for c in curated: self.NordicFunctions |= availfns[c]
+    # special final hack in the case of app_error.h
+    if hfile == "app_error.h": curated.append("app_error.c")
+    self.NordicHSiblings[hfile] = curated
+    return curated
+
+  def get_includes(self,cfile):
+    '''
+    return all the included header files in a given C source file
+    which begin with double quote, e.g. #include "what.h" would contribute
+    what.h to the list, but #include <stdint.h> would not contribute
+    '''
+    with open(cfile) as F:
+      R = list()
+      for line in F:
+        if line.startswith("#include"):
+          fields = line.split()
+          if fields[1].startswith('"') and fields[1].endswith('"'):
+            R.append(fields[1][1:-1])
+    return R
+
+  def gen_includes(self):
+    '''   
+    return a string of "-Isome/location/dir \n-Ianother/location/dir\n ..."
+    which will ultimately be a parameter to gcc, naming all the directories
+    for the includes (accounting for implied C source files as well)    
+    ''' 
+    toinclude = set()
+    for hfile in self.NordicHFunctions:
+      location = self.NordicHFiles[hfile]
+      toinclude.add(location[:-len(hfile)-1])
+    ordered_include = [ item for item in toinclude if item.endswith("examples/bsp") ]
+    ordered_include.extend(item for item in toinclude if not item.endswith("examples/bsp"))
+    make_pattern = 'INC_PATHS += -I{0} \n'
+    make_includes = ''
+    for hdir in ordered_include:
+      make_includes += make_pattern.format(hdir)
+    return make_includes
+
+  def gen_source(self):
+    '''
+    return a string of full paths to C source files for all implied 
+    programs from Nordic, to be part of the full compilation
+    '''
+    togen = set()
+    for cfile in self.NordicCHeaders:
+      if cfile not in self.NordicCFiles: continue
+      location = self.NordicCFiles[cfile]
+      togen.add(location)
+    make_pattern = '{0} \\\n'
+    filelist = ''
+    for cfile in togen:
+      filelist += make_pattern.format(cfile) 
+    return filelist
+          
+  def fn_guesses(self,sourcefile):
+    "all function name guesses for given file" 
+    guesses = list()
+    with open(sourcefile) as F:
+      for line in F:
+        fields = re.split(r"(\s+|\(|\)|,)",line)
+        fields = [e for e in fields if not re.match("\s+",e)]
+        if fields and fields[0] in NordicTypes:
+          if len(fields) > 1: guesses.append(fields[1]) 
+    return guesses 
+
+
+def emitmake(optionparms):
+  '''
+  generate Makefile based on options
+  '''
+  CoBook = cobook(excludes=optionparms.excludes,
+                  includes=optionparms.includes,
+                  sourcefile=optionparms.source,
+                  platform=optionparms.platform,
+                  softdevice=optionparms.softdevice,
+                  nordicbase=optionparms.nordicbase)
+  CoBook.explore(optionparms.source)
+  includes = CoBook.gen_includes()
+  sources  = CoBook.gen_source()
+  with open("Makefile",'w') as F, open("config/Makefile.in",'r') as G:
+    for line in G:
+      if line.startswith("{{{CFiles}}}"):
+        F.write(sources)
+        continue
+      if line.startswith("{{{HFiles}}}"):
+        F.write(includes)
+        continue
+      if line.startswith("{{{Source}}}"):
+        F.write(optionparms.source)
+        continue
+      if line.startswith("{{{CFlags}}}"):
+        if CoBook.softdevice == "blank":
+          continue 
+        if CoBook.softdevice == "s110":
+          F.write("CFLAGS += -DSOFTDEVICE_PRESENT\n")
+          F.write("CFLAGS += -DS110\n")
+          F.write("CFLAGS += -DBLE_STACK_SUPPORT_REQD\n")
+          continue
+      if "{{{ldfile}}}" in line:
+        F.write(line.replace("{{{ldfile}}}","config"+os.sep+CoBook.softdevice+".ld"))
+        continue
+      if "{{{baseaddr}}}" in line:
+        addr = CoBook.softdevice
+        if addr == "blank": addr = "0"
+        F.write(line.replace("{{{baseaddr}}}",addr))
+        continue
+      if "{{{softdevicebin}}}" in line and CoBook.softdevice == "s110":
+        F.write(line.replace("{{{softdevicebin}}}",CoBook.s110bin))
+        continue
+      if "{{{softdevicebin}}}" in line and CoBook.softdevice == "s120":
+        F.write(line.replace("{{{softdevicebin}}}",CoBook.s120bin))
+        continue
+      if "{{{nordicbase}}}" in line:
+        F.write(line.replace("{{{nordicbase}}}",CoBook.nordicbase))
+        continue
+
+      # else just copy line
+      F.write(line)
+
+Options = options() 
+emitmake(Options)

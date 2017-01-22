@@ -55,7 +55,8 @@ class options(object):
   '''
   Read JSON-encoded options from config/options.json, to get paramaters:
     - "nordicbase" is the root of the Nordic software distribution, e.g. /arm/opt/nordic
-    - "source" is the name of the main sourcefile (TODO someday, allow for multiple sources)
+    - "source" is the name of the main sourcefile; or can be a list of source files
+      in the local directory, with the first in the list being the main program
     - "excludes" is a list of files to exclude, like ["device_manager_central.c","app_uart_fifo.c"]
     - "includes" is a list of files to force into the Makefile, 
           like ["nrf51.h","core_cm0.h","system_nrf51.h","bsp.c"]
@@ -66,7 +67,13 @@ class options(object):
     with open("config/options.json") as F:
       O = json.load(F)
     self.nordicbase = str(O['nordicbase']) 
-    self.source = str(O['source'])
+    self.auxiliaries = None
+    if type(O['source']) != list:
+      self.source = str(O['source'])
+    else:
+      self.source = str(O['source'][0])
+      if len(O['source']) > 1:
+        self.auxiliaries = [str(s) for s in O['source'][1:]] 
     self.excludes = [str(s) for s in O['excludes']]
     self.includes = [str(s) for s in O['includes']]
     self.platform = str(O['platform'])
@@ -80,7 +87,7 @@ class cobook(object):
   files implied by the header files
   ''' 
   def __init__(self,includes=[],excludes=[],sourcefile='',platform='',
-                    nordicbase='',softdevice=''):
+                    nordicbase='',softdevice='',auxiliaries=None):
     '''
     parameters are list of includes, list of excludes, sourcefile, 
                    platform, and softdevice
@@ -91,6 +98,7 @@ class cobook(object):
     self.sourcefile = sourcefile
     self.platform = platform
     self.softdevice = softdevice
+    self.auxiliaries = auxiliaries
 
     # three attributes which span all of the Nordic directory
     self.NordicDir = list()        # used to terminate recursion
@@ -264,6 +272,10 @@ class cobook(object):
     filelist = ''
     for cfile in togen:
       filelist += make_pattern.format(cfile) 
+    if self.auxiliaries:
+      for e in self.auxiliaries:
+        if e.endswith(".c"):
+          filelist += "{0} \\\n".format(e)
     return filelist
           
   def fn_guesses(self,sourcefile):
@@ -285,10 +297,13 @@ def emitmake(optionparms):
   CoBook = cobook(excludes=optionparms.excludes,
                   includes=optionparms.includes,
                   sourcefile=optionparms.source,
+                  auxiliaries=optionparms.auxiliaries,
                   platform=optionparms.platform,
                   softdevice=optionparms.softdevice,
                   nordicbase=optionparms.nordicbase)
   CoBook.explore(optionparms.source)
+  if optionparms.auxiliaries:
+    [CoBook.explore(e) for e in optionparms.auxiliaries]
   includes = CoBook.gen_includes()
   sources  = CoBook.gen_source()
   with open("Makefile",'w') as F, open("config/Makefile.in",'r') as G:

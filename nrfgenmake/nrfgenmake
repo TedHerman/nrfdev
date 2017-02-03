@@ -325,6 +325,12 @@ def emitmake(optionparms):
           F.write("CFLAGS += -DS110\n")
           F.write("CFLAGS += -DBLE_STACK_SUPPORT_REQD\n")
           continue
+        if CoBook.softdevice == "s120":
+          F.write("CFLAGS += -DSOFTDEVICE_PRESENT\n")
+          F.write("CFLAGS += -DS120\n")
+          F.write("CFLAGS += -DBLE_STACK_SUPPORT_REQD\n")
+          F.write("CFLAGS += -DBSP_UART_SUPPORT\n")
+          continue
       if "{{{ldfile}}}" in line:
         F.write(line.replace("{{{ldfile}}}","config"+os.sep+CoBook.softdevice+".ld"))
         continue

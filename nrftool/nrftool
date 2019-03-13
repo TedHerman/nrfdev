@@ -146,6 +146,7 @@ info /dev/ttyUSB0\n\t\tThere is more documentation in the README.md\n")
   if args[Current].downloadsize: args[Current].downloadsize = args[Current].downloadsize[0]
   if args[Current].address in ("s110","S110"): args[Current].address = "0x00018000"
   if args[Current].address in ("s120","S120"): args[Current].address = "0x0001d000"
+  if args[Current].address in ("s130","S130"): args[Current].address = "0x0001b000"
   s,base = args[Current].address.strip(),10
   if s.startswith("0x"): s,base = s[2:],16 
   try:

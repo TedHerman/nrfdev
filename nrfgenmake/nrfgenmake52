@@ -4,19 +4,15 @@ import sys, os, re, itertools, json
 '''
 TODO
 
-  There are three modes (so far) for the nrf51 family
+  There are two modes (so far) for the nrf52 family
     
     Blank alone, eg see Blinky in examples/peripheral
-    S110 (peripheral), eg see Clock in examples/ble_peripheral
-    S120 (central), eg see Basestation in examples/ble_central
-
-  So far, this is hardcoded to make S110 work
+    S140 for softdevice (only S140 supported)
 
 TODO
 
   Distinguish between different bsp directories for header
   files, eg examples/bsp versus examples/peripheral/bsp
-  It seems like examples/bsp is the one used for S110
 
 TODO
 
@@ -60,8 +56,10 @@ class options(object):
     - "excludes" is a list of files to exclude, like ["device_manager_central.c","app_uart_fifo.c"]
     - "includes" is a list of files to force into the Makefile, 
           like ["nrf51.h","core_cm0.h","system_nrf51.h","bsp.c"]
-    - "platform" is a Nordic platform name, like "pca10028"
-    - "softdevice" is one of ("blank","s110","s120","s130") as defined by Nordic SDK
+    - "headerexcludes" is a list of libraries (with header files) to ignore
+    - "headerincludes" lists libraries to force in the includes 
+    - "platform" is a Nordic platform name, like "pca10056"
+    - "softdevice" is one of ("blank","s140") as defined by Nordic SDK
   '''
   def __init__(self):
     with open("config/options.json") as F:
@@ -76,6 +74,8 @@ class options(object):
         self.auxiliaries = [str(s) for s in O['source'][1:]] 
     self.excludes = [str(s) for s in O['excludes']]
     self.includes = [str(s) for s in O['includes']]
+    self.headerexcludes = [str(s) for s in O['headerexcludes']]
+    self.headerincludes = [str(s) for s in O['headerincludes']]
     self.platform = str(O['platform'])
     self.softdevice = str(O['softdevice'])
 
@@ -86,7 +86,9 @@ class cobook(object):
   the status of each (queued, processed), and a dictionary of C
   files implied by the header files
   ''' 
-  def __init__(self,includes=[],excludes=[],sourcefile='',platform='',
+  def __init__(self,includes=[],excludes=[],
+                    headerincludes=[],headerexcludes=[],
+                    sourcefile='',platform='',
                     nordicbase='',softdevice='',auxiliaries=None):
     '''
     parameters are list of includes, list of excludes, sourcefile, 
@@ -95,6 +97,8 @@ class cobook(object):
     self.nordicbase = nordicbase
     self.includes = includes
     self.excludes = excludes
+    self.headerincludes = headerincludes 
+    self.headerexcludes = headerexcludes 
     self.sourcefile = sourcefile
     self.platform = platform
     self.softdevice = softdevice
@@ -110,8 +114,21 @@ class cobook(object):
     self.NordicFunctions = set()   # union of all guessed functions
     self.NordicHSiblings = dict()  # map foo.h -> list(companion C files)
     self.walk(self.nordicbase+"/examples/bsp") # add board definitions to software stack
+    self.walk(self.nordicbase+"/components/boards") # add board definitions to software stack
     self.walk(self.nordicbase+"/components")   # populate NordicDir, HFiles, CFiles
+    self.walk(self.nordicbase+"/modules")      # new things for nrf52 
+    self.walk(self.nordicbase+"/external")     # get some extra things 
+    self.walk(self.nordicbase+"/integration")  # not sure why we have to explore this 
     self.findsoftdevice(self.nordicbase)       # find and remember softdevice binaries
+
+  def simplerpath(self,path):
+    '''
+    when a path begins with the path in nordicbase, return
+    a simpler version of the path using $(NORDIC_PATH) to replace 
+    ''' 
+    if not path.startswith(self.nordicbase): return path
+    newpath = "$(NORDIC_PATH){0}".format(path[len(self.nordicbase):])  
+    return newpath
 
   def walk(self,base):
     '''
@@ -125,27 +142,22 @@ class cobook(object):
     self.NordicDir.append(base)
     subdirs = os.listdir(base)
     for name in subdirs:
-      if self.softdevice == "blank" and name in ("softdevice","s110","s120","s130"):
-         continue
       if name.endswith(".h"): self.NordicHFiles[name] = base+os.sep+name
       if name.endswith(".c"): self.NordicCFiles[name] = base+os.sep+name
     for name in subdirs: 
-      if self.softdevice == "blank" and name in ("softdevice","s110","s120","s130"):
-         continue
       self.walk(base+os.sep+name)
 
   def findsoftdevice(self,base):
     ''' 
-    find locations of s110 and s120 binaries, possibly needed for flashing
+    find location of s140 binary, possibly needed for flashing
     '''
-    s110base = base+os.sep+"components/softdevice/s110/hex"
-    s120base = base+os.sep+"components/softdevice/s120/hex"
-    s110dir = [e for e in os.listdir(s110base) if e.endswith(".bin")]
-    s120dir = [e for e in os.listdir(s120base) if e.endswith(".bin")]
-    assert len(s110dir) == 1
-    assert len(s120dir) == 1
-    self.s110bin = s110base + os.sep + s110dir[0]
-    self.s120bin = s120base + os.sep + s120dir[0]
+    s140base = base+os.sep+"components/softdevice/s140/hex"
+    s140dir = list()
+    if os.path.isdir(s140base):
+       s140dir = [e for e in os.listdir(s140base) if e.endswith(".hex")]
+    self.s140hex = None
+    if len(s140dir) > 0:
+       self.s140hex = s140base + os.sep + s140dir[0]
 
   def explore(self,cfile):
     '''
@@ -242,7 +254,7 @@ class cobook(object):
 
   def gen_includes(self):
     '''   
-    return a string of "-Isome/location/dir \n-Ianother/location/dir\n ..."
+    return a string of " some/location/dir \n-Ianother/location/dir \\\n ..."
     which will ultimately be a parameter to gcc, naming all the directories
     for the includes (accounting for implied C source files as well)    
     ''' 
@@ -250,12 +262,21 @@ class cobook(object):
     for hfile in self.NordicHFunctions:
       location = self.NordicHFiles[hfile]
       toinclude.add(location[:-len(hfile)-1])
-    ordered_include = [ item for item in toinclude if item.endswith("examples/bsp") ]
-    ordered_include.extend(item for item in toinclude if not item.endswith("examples/bsp"))
-    make_pattern = 'INC_PATHS += -I{0} \n'
+    for minus in self.headerexcludes:
+      toinclude = [item for item in toinclude if not item.endswith(minus)] 
+    ordered_include = [ self.nordicbase + os.sep + item for 
+                           item in self.headerincludes ]
+    ordered_include.extend([ item for item in toinclude 
+                          if item.endswith("examples/bsp") ])
+    ordered_include.extend([ item for item in toinclude 
+                          if item.endswith("components/boards") ])
+    ordered_include.extend(item for item in toinclude if (
+            not item.endswith("examples/bsp") 
+            and not item.endswith("components/boards")))
+    make_pattern = ' {0} \\\n'
     make_includes = ''
     for hdir in ordered_include:
-      make_includes += make_pattern.format(hdir)
+      make_includes += make_pattern.format(self.simplerpath(hdir))
     return make_includes
 
   def gen_source(self):
@@ -265,17 +286,22 @@ class cobook(object):
     '''
     togen = set()
     for cfile in self.NordicCHeaders:
+      if self.auxiliaries and cfile in self.auxiliaries: continue
       if cfile not in self.NordicCFiles: continue
       location = self.NordicCFiles[cfile]
       togen.add(location)
-    make_pattern = '{0} \\\n'
+    make_pattern = ' {0} \\\n'
     filelist = ''
     for cfile in togen:
-      filelist += make_pattern.format(cfile) 
+      filelist += make_pattern.format(self.simplerpath(cfile)) 
     if self.auxiliaries:
       for e in self.auxiliaries:
         if e.endswith(".c"):
-          filelist += "{0} \\\n".format(e)
+          #haveit = False
+          #for p in togen: haveit = haveit or p.endswith(os.sep+e)
+          #if not haveit:
+          #  filelist += "{0} \\\n".format(e)
+          filelist += " {0} \\\n".format(e)
     return filelist
           
   def fn_guesses(self,sourcefile):
@@ -296,6 +322,8 @@ def emitmake(optionparms):
   '''
   CoBook = cobook(excludes=optionparms.excludes,
                   includes=optionparms.includes,
+                  headerexcludes=optionparms.headerexcludes,
+                  headerincludes=optionparms.headerincludes,
                   sourcefile=optionparms.source,
                   auxiliaries=optionparms.auxiliaries,
                   platform=optionparms.platform,
@@ -320,14 +348,9 @@ def emitmake(optionparms):
       if line.startswith("{{{CFlags}}}"):
         if CoBook.softdevice == "blank":
           continue 
-        if CoBook.softdevice == "s110":
+        if CoBook.softdevice == "s140":
           F.write("CFLAGS += -DSOFTDEVICE_PRESENT\n")
-          F.write("CFLAGS += -DS110\n")
-          F.write("CFLAGS += -DBLE_STACK_SUPPORT_REQD\n")
-          continue
-        if CoBook.softdevice == "s120":
-          F.write("CFLAGS += -DSOFTDEVICE_PRESENT\n")
-          F.write("CFLAGS += -DS120\n")
+          F.write("CFLAGS += -DS140\n")
           F.write("CFLAGS += -DBLE_STACK_SUPPORT_REQD\n")
           F.write("CFLAGS += -DBSP_UART_SUPPORT\n")
           continue
@@ -344,6 +367,9 @@ def emitmake(optionparms):
         continue
       if "{{{softdevicebin}}}" in line and CoBook.softdevice == "s120":
         F.write(line.replace("{{{softdevicebin}}}",CoBook.s120bin))
+        continue
+      if "{{{softdevicebin}}}" in line and CoBook.softdevice == "s130":
+        F.write(line.replace("{{{softdevicebin}}}",CoBook.s130bin))
         continue
       if "{{{nordicbase}}}" in line:
         F.write(line.replace("{{{nordicbase}}}",CoBook.nordicbase))

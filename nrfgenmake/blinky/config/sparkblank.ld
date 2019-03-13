@@ -5,7 +5,7 @@ GROUP(-lgcc -lc -lnosys)
 
 MEMORY
 {
-  FLASH (rx) : ORIGIN = 0x0, LENGTH = 0x100000
+  FLASH (rx) : ORIGIN = 0x26000, LENGTH = 0xce000
   RAM (rwx) :  ORIGIN = 0x20000000, LENGTH = 0x40000
 }
 
@@ -56,12 +56,6 @@ SECTIONS
     PROVIDE(__start_nrf_balloc = .);
     KEEP(*(.nrf_balloc))
     PROVIDE(__stop_nrf_balloc = .);
-  } > FLASH
-  .pwr_mgmt_data :
-  {
-    PROVIDE(__start_pwr_mgmt_data = .);
-    KEEP(*(SORT(.pwr_mgmt_data*)))
-    PROVIDE(__stop_pwr_mgmt_data = .);
   } > FLASH
 
 } INSERT AFTER .text

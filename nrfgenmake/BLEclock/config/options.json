@@ -1,5 +1,5 @@
 {"nordicbase":"/arm/opt/nordic",
- "source":"bleclock.c",
+ "source":"demo.c",
  "excludes":["app_timer_ble_gzll.c", 
              "app_timer_rtx.c",
              "app_timer_freertos.c",

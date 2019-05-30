@@ -1,6 +1,6 @@
 PROJECT_NAME := pca10028
 
-NORDIC_PATH = /arm/opt/nordic
+NORDIC_PATH = /opt/nordic
 
 export OUTPUT_FILENAME
 #MAKEFILE_NAME := $(CURDIR)/$(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST))
@@ -35,60 +35,61 @@ remduplicates = $(strip $(if $1,$(firstword $1) $(call remduplicates,$(filter-ou
 
 #source common to all targets
 C_SOURCE_FILES += \
-/arm/opt/nordic/components/ble/common/ble_srv_common.c \
-/arm/opt/nordic/components/libraries/util/app_util_platform.c \
-/arm/opt/nordic/components/ble/ble_advertising/ble_advertising.c \
-/arm/opt/nordic/components/drivers_nrf/twi_master/nrf_drv_twi.c \
-/arm/opt/nordic/components/ble/ble_services/ble_bas/ble_bas.c \
-/arm/opt/nordic/components/drivers_nrf/delay/nrf_delay.c \
-/arm/opt/nordic/components/drivers_nrf/uart/nrf_drv_uart.c \
-/arm/opt/nordic/components/libraries/uart/retarget.c \
-/arm/opt/nordic/components/libraries/util/app_error.c \
-/arm/opt/nordic/components/toolchain/system_nrf51.c \
-/arm/opt/nordic/components/libraries/util/nrf_assert.c \
-/arm/opt/nordic/components/softdevice/common/softdevice_handler/softdevice_handler.c \
-/arm/opt/nordic/components/libraries/trace/app_trace.c \
-/arm/opt/nordic/components/ble/ble_services/ble_dis/ble_dis.c \
-/arm/opt/nordic/components/ble/common/ble_advdata.c \
-/arm/opt/nordic/components/libraries/button/app_button.c \
-/arm/opt/nordic/components/libraries/timer/app_timer.c \
-/arm/opt/nordic/components/drivers_nrf/pstorage/pstorage.c \
-/arm/opt/nordic/components/libraries/uart/app_uart.c \
-/arm/opt/nordic/components/drivers_nrf/common/nrf_drv_common.c \
-/arm/opt/nordic/components/ble/device_manager/device_manager_peripheral.c \
-/arm/opt/nordic/examples/bsp/bsp.c \
-/arm/opt/nordic/components/ble/common/ble_conn_params.c \
-/arm/opt/nordic/components/drivers_nrf/gpiote/nrf_drv_gpiote.c \
-demo.c
+/opt/nordic/components/ble/device_manager/device_manager_peripheral.c \
+/opt/nordic/examples/bsp/bsp.c \
+/opt/nordic/components/libraries/trace/app_trace.c \
+/opt/nordic/components/libraries/util/nrf_assert.c \
+/opt/nordic/components/drivers_nrf/delay/nrf_delay.c \
+/opt/nordic/components/drivers_nrf/pstorage/pstorage.c \
+/opt/nordic/components/ble/common/ble_conn_params.c \
+/opt/nordic/components/ble/common/ble_srv_common.c \
+/opt/nordic/components/ble/common/ble_advdata.c \
+/opt/nordic/components/toolchain/system_nrf51.c \
+/opt/nordic/components/libraries/uart/retarget.c \
+/opt/nordic/components/ble/ble_services/ble_bas/ble_bas.c \
+/opt/nordic/components/libraries/timer/app_timer.c \
+/opt/nordic/components/ble/ble_services/ble_dis/ble_dis.c \
+/opt/nordic/components/drivers_nrf/gpiote/nrf_drv_gpiote.c \
+/opt/nordic/components/drivers_nrf/twi_master/nrf_drv_twi.c \
+/opt/nordic/components/ble/ble_advertising/ble_advertising.c \
+/opt/nordic/components/libraries/button/app_button.c \
+/opt/nordic/components/softdevice/common/softdevice_handler/softdevice_handler.c \
+/opt/nordic/components/libraries/util/app_util_platform.c \
+/opt/nordic/components/drivers_nrf/common/nrf_drv_common.c \
+/opt/nordic/components/libraries/uart/app_uart.c \
+/opt/nordic/components/drivers_nrf/uart/nrf_drv_uart.c \
+/opt/nordic/components/libraries/util/app_error.c \
+bleclock.c
 #assembly files common to all targets
 ASM_SOURCE_FILES  = $(NORDIC_PATH)/components/toolchain/gcc/gcc_startup_nrf51.s
 
 #includes common to all targets
 INC_PATHS  = -Iconfig
-INC_PATHS += -I/arm/opt/nordic/examples/bsp 
-INC_PATHS += -I/arm/opt/nordic/components/drivers_nrf/pstorage 
-INC_PATHS += -I/arm/opt/nordic/components/softdevice/s120/headers 
-INC_PATHS += -I/arm/opt/nordic/components/drivers_nrf/common 
-INC_PATHS += -I/arm/opt/nordic/components/libraries/util 
-INC_PATHS += -I/arm/opt/nordic/components/drivers_nrf/gpiote 
-INC_PATHS += -I/arm/opt/nordic/components/libraries/uart 
-INC_PATHS += -I/arm/opt/nordic/components/ble/common 
-INC_PATHS += -I/arm/opt/nordic/components/softdevice/common/softdevice_handler 
-INC_PATHS += -I/arm/opt/nordic/components/toolchain/gcc 
-INC_PATHS += -I/arm/opt/nordic/components/ble/ble_services/ble_dis 
-INC_PATHS += -I/arm/opt/nordic/components/drivers_nrf/uart 
-INC_PATHS += -I/arm/opt/nordic/components/ble/ble_advertising 
-INC_PATHS += -I/arm/opt/nordic/components/drivers_nrf/hal 
-INC_PATHS += -I/arm/opt/nordic/components/drivers_nrf/delay 
-INC_PATHS += -I/arm/opt/nordic/components/libraries/button 
-INC_PATHS += -I/arm/opt/nordic/components/ble/device_manager 
-INC_PATHS += -I/arm/opt/nordic/components/drivers_nrf/config 
-INC_PATHS += -I/arm/opt/nordic/components/drivers_nrf/twi_master 
-INC_PATHS += -I/arm/opt/nordic/components/libraries/trace 
-INC_PATHS += -I/arm/opt/nordic/components/ble/ble_services/ble_bas 
-INC_PATHS += -I/arm/opt/nordic/components/toolchain 
-INC_PATHS += -I/arm/opt/nordic/components/device 
-INC_PATHS += -I/arm/opt/nordic/components/libraries/timer 
+INC_PATHS += -I/opt/nordic/examples/bsp 
+INC_PATHS += -I/opt/nordic/components/ble/ble_services/ble_dis 
+INC_PATHS += -I/opt/nordic/components/ble/ble_advertising 
+INC_PATHS += -I/opt/nordic/components/softdevice/common/softdevice_handler 
+INC_PATHS += -I/opt/nordic/components/drivers_nrf/delay 
+INC_PATHS += -I/opt/nordic/components/drivers_nrf/hal 
+INC_PATHS += -I/opt/nordic/components/ble/common 
+INC_PATHS += -I/opt/nordic/components/drivers_nrf/common 
+INC_PATHS += -I/opt/nordic/components/libraries/util 
+INC_PATHS += -I/opt/nordic/components/toolchain/gcc 
+INC_PATHS += -I/opt/nordic/components/drivers_nrf/gpiote 
+INC_PATHS += -I/opt/nordic/components/drivers_nrf/twi_master 
+INC_PATHS += -I/opt/nordic/components/ble/device_manager 
+INC_PATHS += -I/opt/nordic/components/libraries/uart 
+INC_PATHS += -I/opt/nordic/components/device 
+INC_PATHS += -I/opt/nordic/components/drivers_nrf/pstorage 
+INC_PATHS += -I/opt/nordic/components/softdevice/s120/headers 
+INC_PATHS += -I/opt/nordic/components/softdevice/s210/headers 
+INC_PATHS += -I/opt/nordic/components/drivers_nrf/config 
+INC_PATHS += -I/opt/nordic/components/toolchain 
+INC_PATHS += -I/opt/nordic/components/libraries/trace 
+INC_PATHS += -I/opt/nordic/components/ble/ble_services/ble_bas 
+INC_PATHS += -I/opt/nordic/components/drivers_nrf/uart 
+INC_PATHS += -I/opt/nordic/components/libraries/timer 
+INC_PATHS += -I/opt/nordic/components/libraries/button 
 
 OBJECT_DIRECTORY = _build
 LISTING_DIRECTORY = $(OBJECT_DIRECTORY)
@@ -221,4 +222,4 @@ flash: $(MAKECMDGOALS)
 
 flash_softdevice:
 	@echo Flashing: softdevice
-	nrftool --address 0 --progfile /arm/opt/nordic/components/softdevice/s110/hex/s110_nrf51_8.0.0_softdevice.bin program /dev/ttyUSB0
+	nrftool --address 0 --progfile /opt/nordic/components/softdevice/s110/hex/s110_nrf51_8.0.0_softdevice.bin program /dev/ttyUSB0

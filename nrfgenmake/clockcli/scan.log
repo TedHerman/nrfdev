@@ -1,0 +1,470 @@
+Script started on 2019-04-04 10:27:58-0500
+<info> app: scanned 71A82AF82E53
+<info> app: rssi -82
+ 02 01 1A 0A FF 4C 00 10|.....L..
+ 05 0A 1C EA 94 BE 00 00|........
+ 00 00 00 00 00 00 00 00|........
+ 00 00 00 00 00 00 00   |....... 
+<info> app: scanned ABFCEA6EDD42
+<info> app: rssi -81
+ 02 01 1C 0C 09 56 65 63|.....Vec
+ 74 6F 72 20 47 38 45 32|tor G8E2
+ 05 FF F8 05 76 00 03 03|....v...
+ E3 FE 00 00 00 00 00   |....... 
+<info> app: scanned 5D2B94CBB8FF
+<info> app: rssi -78
+ 02 01 04 03 03 9A FE 16|........
+ 16 9A FE 11 44 C9 91 EA|....D...
+ 71 4D 5B E0 AB 6E DE 8F|qM[..n..
+ CA B0 A0 25 C2 02 00   |...%... 
+<info> app: scanned A25141D987DB
+<info> app: rssi -79
+ 02 01 04 03 03 9A FE 16|........
+ 16 9A FE 11 35 2B 5F 37|....5+_7
+ F1 BB 06 54 DC 41 32 55|...T.A2U
+ DC EE C3 0B C2 02 00   |....... 
+<info> app: scanned 001D79549052
+<info> app: rssi -75
+ 02 01 1A 0A FF 4C 00 10|.....L..
+ 05 0B 1C CA C9 0A 5F 37|......_7
+ F1 BB 06 54 DC 41 32 55|...T.A2U
+ DC EE C3 0B C2 02 00   |....... 
+<info> app: scanned 58694CEC1CCD
+<info> app: rssi -79
+ 02 01 04 03 03 9A FE 16|........
+ 16 9A FE 11 BF 98 3A AA|......:.
+ 67 99 F4 70 AE BB 2C 23|g..p..,#
+ 7D 05 02 11 C2 03 00   |}...... 
+<info> app: scanned 9F0A861B5F52
+<info> app: rssi -87
+ 02 01 1A 0A FF 4C 00 10|.....L..
+ 05 13 18 A5 B3 C1 3A AA|......:.
+ 67 99 F4 70 AE BB 2C 23|g..p..,#
+ 7D 05 02 11 C2 03 00   |}...... 
+<info> app: scanned 937B268B68C5
+<info> app: rssi -61
+ 03 19 00 00 02 01 06 05|........
+ 03 0A 18 2C 15 0C 09 53|...,...S
+ 69 67 6E 61 6C 20 4C 61|ignal La
+ 62 73 02 11 C2 03 00   |bs..... 
+<info> app: scanned E8C33B9C0030
+<info> app: rssi -73
+ 1E FF 06 00 01 09 20 02|...... .
+ 41 78 89 DE 27 2D 65 EB|Ax..'-e.
+ 26 4E A0 9E 03 DB 1E 14|&N......
+ 0D 60 29 2A 12 13 CE   |.`)*... 
+<info> app: scanned 9BC820C89C45
+<info> app: rssi -75
+ 02 01 1A 10 FF 4C 00 0D|.....L..
+ 04 42 E6 DB BD 10 05 0A|.B......
+ 1C 23 DA 10 03 DB 1E 14|.#......
+ 0D 60 29 2A 12 13 CE   |.`)*... 
+<info> app: scanned E05FE1383258
+<info> app: rssi -78
+ 02 01 1A 0A FF 4C 00 10|.....L..
+ 05 03 18 B6 24 06 05 0A|....$...
+ 1C 23 DA 10 03 DB 1E 14|.#......
+ 0D 60 29 2A 12 13 CE   |.`)*... 
+<info> app: scanned FD7044B79274
+<info> app: rssi -76
+ 02 01 06 07 FF 4C 00 10|.....L..
+ 02 01 08 DB BD 10 05 0A|........
+ 1C 23 DA 10 6C 20 4C 61|.#..l La
+ 62 73 02 11 C2 02 CE   |bs..... 
+<info> app: scanned 8E255BE66951
+<info> app: rssi -83
+ 1E FF 4C 00 07 19 01 02|..L.....
+ 20 0B 66 0F 01 00 00 44| .f....D
+ 42 2F C2 AB 15 0F E0 51|B/.....Q
+ 8F D5 99 63 E2 62 2F   |...c.b/ 
+<info> app: scanned C46BF3DF1D4D
+<info> app: rssi -82
+ 1E FF 4C 00 07 19 01 03|..L.....
+ 20 00 FA 0F 04 0C 00 33| ......3
+ 51 F6 F1 8D 70 2B 78 0F|Q...p+x.
+ FE 45 7A 2B 50 BE 26   |.Ez+P.& 
+<info> app: scanned C7B416393D7C
+<info> app: rssi -83
+ 02 01 1A 0A FF 4C 00 10|.....L..
+ 05 0A 1C 59 E1 EE 45 32|...Y..E2
+ 05 FF F8 05 76 00 03 03|....v...
+ E3 FE 7A 2B 50 BE 26   |..z+P.& 
+<info> app: scanned 472A985EEFC6
+<info> app: rssi -90
+ 02 01 04 03 03 9A FE 16|........
+ 16 9A FE 11 FB 5D 84 0E|.....]..
+ 5D FC EB 2F 0B A0 80 CD|]../....
+ 05 DC F9 0C C2 01 26   |......& 
+<info> app: scanned ABCC69F36E36
+<info> app: rssi -84
+ 1E FF 06 00 01 09 20 02|...... .
+ 0C 1A EE C3 81 D6 F7 D4|........
+ 38 46 57 13 21 16 05 A1|8FW.!...
+ 92 07 7E 93 08 85 E6   |..~.... 
+<info> app: scanned 4DB639E3FFEC
+<info> app: rssi -84
+ 02 01 06 1A FF 4C 00 02|.....L..
+ 15 E1 F5 4E 02 1E 23 44|...N..#D
+ E0 9C 3D 51 2E B5 6A DE|..=Q..j.
+ C9 00 64 00 64 B9 E6   |..d.d.. 
+<info> app: scanned 95300AB9E9D7
+<info> app: rssi -82
+ 02 01 04 03 03 9A FE 16|........
+ 16 9A FE 11 5B 16 49 EB|....[.I.
+ 8B BE F9 6D D6 2E 40 0E|...m..@.
+ 5B E5 6B 1A C2 02 E6   |[.k.... 
+<info> app: scanned DBCE52C47C51
+<info> app: rssi -75
+ 02 01 1A 0A FF 4C 00 10|.....L..
+ 05 01 18 FE 00 60 45 32|.....`E2
+ 05 FF F8 05 76 00 03 03|....v...
+ E3 FE F9 0C C2 03 E6   |....... 
+<info> app: scanned 0EA95BBED24B
+<info> app: rssi -79
+ 02 01 1A 0A FF 4C 00 10|.....L..
+ 05 01 90 2E F2 69 49 EB|.....iI.
+ 8B BE F9 6D D6 2E 40 0E|...m..@.
+ 5B E5 6B 1A C2 01 E6   |[.k.... 
+<info> app: scanned DBBD77961670
+<info> app: rssi -77
+ 02 01 1A 0A FF 4C 00 10|.....L..
+ 05 07 1C 00 D3 CE 45 32|......E2
+ 05 FF F8 05 76 00 03 03|....v...
+ E3 FE 6B 1A C2 01 E6   |..k.... 
+<info> app: scanned F46F0550FB79
+<info> app: rssi -88
+ 02 01 1A 0A FF 4C 00 10|.....L..
+ 05 0A 1C BE 28 EB 45 32|....(.E2
+ 05 FF F8 05 76 00 03 03|....v...
+ E3 FE 6B 1A C2 01 E6   |..k.... 
+<info> app: scanned 055C37DFC7C7
+<info> app: rssi -86
+ 02 01 04 03 03 9A FE 16|........
+ 16 9A FE 11 10 C2 D8 E1|........
+ 2A 19 96 C4 40 02 EC 65|*...@..e
+ 19 96 08 20 C2 01 E6   |... ... 
+<info> app: scanned 17C45757065C
+<info> app: rssi -85
+ 02 01 1A 0A FF 4C 00 10|.....L..
+ 05 0A 1C 52 4C 5D 65 EB|...RL]e.
+ 26 4E A0 9E 03 DB 1E 14|&N......
+ 0D 60 29 2A 12 13 CE   |.`)*... 
+<info> app: scanned D6207B3AAF18
+<info> app: rssi -82
+ 1E FF 06 00 01 09 20 02|...... .
+ 96 24 09 04 6C E5 13 9D|.$..l...
+ DA AF EC F7 05 9F D9 78|.......x
+ 8F DE AA 1E 25 59 CA   |....%Y. 
+<info> app: scanned 225A4792FBEC
+<info> app: rssi -87
+ 02 01 06 1A FF 4C 00 02|.....L..
+ 15 E1 F5 4E 02 1E 23 44|...N..#D
+ E0 9C 3D 51 2E B5 6A DE|..=Q..j.
+ C9 00 64 00 64 B9 CE   |..d.d.. 
+<info> app: scanned 399247446674
+<info> app: rssi -88
+ 1E FF 4C 00 07 19 01 05|..L.....
+ 20 00 F9 0F 07 1D 00 53| ......S
+ D3 EC 78 B5 12 F5 F9 77|..x....w
+ E7 E6 1C C9 E8 95 F3   |....... 
+<info> app: scanned CE90AF5D1A68
+<info> app: rssi -85
+ 1E FF 4C 00 07 19 01 02|..L.....
+ 20 0B 77 0F 01 00 00 3F| .w....?
+ AD 62 CD 04 D8 74 F6 58|.b...t.X
+ 02 AA C3 09 F1 A3 F4   |....... 
+<info> app: scanned FAD5E1C83A19
+<info> app: rssi -87
+ 1E FF 06 00 01 09 20 02|...... .
+ 20 A7 88 DA 77 BF C5 9A| ...w...
+ 69 73 FE BB AD DA 5F 47|is...._G
+ FD 19 89 F5 22 AE E2   |....".. 
+<info> app: scanned A35242DA88DC
+<info> app: rssi -85
+ 02 01 04 03 03 9A FE 17|........
+ 16 9A FE 22 35 2B 5F 37|..."5+_7
+ F1 BB 06 54 01 00 00 00|...T....
+ 00 0B A7 5C C8 5E 5F   |...\.^_ 
+<info> app: scanned 5CDBB0462EEC
+<info> app: rssi -87
+ 02 01 06 1A FF 4C 00 02|.....L..
+ 15 E1 F5 4E 02 1E 23 44|...N..#D
+ E0 9C 3D 51 2E B5 6A DE|..=Q..j.
+ C9 00 64 00 64 B9 CA   |..d.d.. 
+<info> app: scanned 482B995FF0C7
+<info> app: rssi -88
+ 02 01 04 03 03 9A FE 17|........
+ 16 9A FE 22 FB 5D 84 0E|...".]..
+ 5D FC EB 2F 01 00 00 00|]../....
+ 00 0B A7 5B 20 5E 5F   |...[ ^_ 
+<info> app: scanned 40EF1208F6CC
+<info> app: rssi -80
+ 02 01 06 03 03 0A 18 11|........
+ 07 30 F8 22 1F 8E 30 4C|.0."..0L
+ FB 8B 59 19 D2 0F C7 F6|..Y.....
+ C6 05 FF BE EF 5B 4F   |.....[O 
+<info> app: scanned 227402E943EC
+<info> app: rssi -84
+ 02 01 06 1A FF 4C 00 02|.....L..
+ 15 E1 F5 4E 02 1E 23 44|...N..#D
+ E0 9C 3D 51 2E B5 6A DE|..=Q..j.
+ C9 00 64 00 64 B9 5B   |..d.d.[ 
+<info> app: scanned 88BEC954114D
+<info> app: rssi -85
+ 02 01 1A 0A FF 4C 00 10|.....L..
+ 05 01 18 68 07 FA 45 32|...h..E2
+ 05 FF F8 05 76 00 03 03|....v...
+ E3 FE 29 2A 12 13 CE   |..)*... 
+<info> app: scanned AE6CA60C2A4F
+<info> app: rssi -87
+ 02 01 1A 0A FF 4C 00 10|.....L..
+ 05 0A 1C 8E 34 ED 65 EB|....4.e.
+ 26 4E A0 9E 03 DB 1E 14|&N......
+ 0D 60 29 2A 12 13 CE   |.`)*... 
+<info> app: scanned 065D38E0C8C8
+<info> app: rssi -84
+ 02 01 04 03 03 9A FE 17|........
+ 16 9A FE 22 10 C2 D8 E1|..."....
+ 2A 19 96 C4 00 06 FF 3E|*......>
+ 01 8D F8 DD 51 86 01   |....Q.. 
+<info> app: scanned 5C4146FA2D1F
+<info> app: rssi -87
+ 1E FF 06 00 01 09 20 02|...... .
+ 0C 1A EE C3 81 D6 F7 D4|........
+ 38 46 57 13 21 16 05 A1|8FW.!...
+ 92 07 7E 93 08 85 E6   |..~.... 
+<info> app: scanned 7303B0395556
+<info> app: rssi -83
+ 02 01 1A 0A FF 4C 00 10|.....L..
+ 05 01 1C 83 42 1E 65 EB|....B.e.
+ 26 4E A0 9E 03 DB 1E 14|&N......
+ 0D 60 29 2A 12 13 CE   |.`)*... 
+<info> app: scanned 3FB61FE5F276
+<info> app: rssi -86
+ 02 01 1A 0A FF 4C 00 10|.....L..
+ 05 1B 1C 43 CF 26 23 44|...C.&#D
+ E0 9C 3D 51 2E B5 6A DE|..=Q..j.
+ C9 00 64 00 64 B9 5B   |..d.d.[ 
+<info> app: scanned CD3BE9BBD8F5
+<info> app: rssi -82
+ 02 01 06 03 03 ED FE 0C|........
+ 0E 00 B2 F7 EA A1 99 AD|........
+ 5C 86 0A 0B 8D 1F 6B 10|\.....k.
+ 05 1B 1C 43 CF 26 CE   |...C.&. 
+<info> app: scanned 65214143C74A
+<info> app: rssi -87
+ 02 01 1A 0A FF 4C 00 10|.....L..
+ 05 0B 1C 06 B5 80 79 FC|......y.
+ 3B 2E C6 2B 6C A3 5C 2E|;..+l.\.
+ 2A 0D 0C 27 86 3C 5B   |*..'.<[ 
+<info> app: scanned 30EAAFD02662
+<info> app: rssi -88
+ 02 01 1A 0A FF 4C 00 10|.....L..
+ 05 01 1C 20 27 D0 49 EB|... '.I.
+ 8B BE F9 6D D6 2E 40 0E|...m..@.
+ 5B E5 6B 1A C2 01 CE   |[.k.... 
+<info> app: scanned 6DFC9AF8D65B
+<info> app: rssi -90
+ 1E FF 4C 00 07 19 01 03|..L.....
+ 20 00 F2 0F 04 01 00 54| ......T
+ 1B 45 7D 59 96 14 E3 7D|.E}Y...}
+ C0 2B 3C EE 0E 5B 82   |.+<..[. 
+<info> app: scanned 9847C129CE49
+<info> app: rssi -87
+ 02 01 1A 1A FF 4C 00 02|.....L..
+ 15 6C A0 C7 3C F8 EC 46|.l..<..F
+ 87 91 12 41 DC B6 F2 88|...A....
+ 79 03 12 8A 41 C5 CE   |y...A.. 
+<info> app: scanned 050ADDEBDE67
+<info> app: rssi -84
+ 02 01 1A 0A FF 4C 00 10|.....L..
+ 05 0B 1C D2 E1 99 09 53|.......S
+ 69 67 6E 61 6C 20 4C 61|ignal La
+ 62 73 0C 27 86 3C 5B   |bs.'.<[ 
+<info> app: scanned 197298098A66
+<info> app: rssi -85
+ 02 01 1A 0A FF 4C 00 10|.....L..
+ 05 1B 1C 66 67 CC 91 EA|...fg...
+ 71 4D 5B E0 AB 6E DE 8F|qM[..n..
+ CA B0 A0 25 C2 01 CE   |...%... 
+<info> app: scanned 5E2C95CCB9C0
+<info> app: rssi -85
+ 02 01 04 03 03 9A FE 17|........
+ 16 9A FE 22 44 C9 91 EA|..."D...
+ 71 4D 5B E0 01 00 00 00|qM[.....
+ 00 B5 66 5C 74 5E 5F   |..f\t^_ 
+<info> app: scanned 69C2CF84EF73
+<info> app: rssi -89
+ 02 01 1A 0A FF 4C 00 10|.....L..
+ 05 03 18 2B 72 88 3A AA|...+r.:.
+ 67 99 F4 70 AE BB 2C 23|g..p..,#
+ 7D 05 02 11 C2 02 CE   |}...... 
+<info> app: scanned 516246905264
+<info> app: rssi -87
+ 02 01 1A 0A FF 4C 00 10|.....L..
+ 05 03 18 1B 0B A0 84 0E|........
+ 5D FC EB 2F 0B A0 80 CD|]../....
+ 05 DC F9 0C C2 01 E6   |....... 
+<info> app: scanned 9FC190DAD3EC
+<info> app: rssi -92
+ 02 01 06 1A FF 4C 00 02|.....L..
+ 15 E1 F5 4E 02 1E 23 44|...N..#D
+ E0 9C 3D 51 2E B5 6A DE|..=Q..j.
+ C9 00 64 00 64 B9 E6   |..d.d.. 
+<info> app: scanned 5216592B907F
+<info> app: rssi -90
+ 02 01 1A 0A FF 4C 00 10|.....L..
+ 05 0B 18 E1 13 18 5F 37|......_7
+ F1 BB 06 54 DC 41 32 55|...T.A2U
+ DC EE C3 0B C2 01 4F   |......O 
+<info> app: scanned 326770878F47
+<info> app: rssi -86
+ 02 01 1A 1A FF 4C 00 0C|.....L..
+ 0E 00 49 F0 F3 4C 40 61|..I..L@a
+ 41 C8 C0 ED 08 41 FB 10|A....A..
+ 05 03 1C 35 37 F4 CE   |...57.. 
+<info> app: scanned 85AB998465E0
+<info> app: rssi -86
+ 02 01 06 03 03 ED FE 02|........
+ 87 0F 25 65 C5 EF 79 FC|..%e..y.
+ 3B 2E C6 2B 6C A3 5C 2E|;..+l.\.
+ 2A 0D 0C 27 86 3C 5B   |*..'.<[ 
+<info> app: scanned 26C313126A42
+<info> app: rssi -87
+ 02 01 1A 0A FF 4C 00 10|.....L..
+ 05 03 1C 62 AE 99 05 0B|...b....
+ 1C 23 DA 10 6C A3 5C 2E|.#..l.\.
+ 2A 0D 0C 27 86 3C 5B   |*..'.<[ 
+<info> app: scanned 6BFCD2F60058
+<info> app: rssi -85
+ 1E FF 4C 00 07 19 01 03|..L.....
+ 20 00 F8 0F 00 00 00 E1| .......
+ 40 A1 69 E6 3A 24 AF CE|@.i.:$..
+ 71 C0 9A 8C CF 82 BA   |q...... 
+<info> app: scanned D373D268CC6B
+<info> app: rssi -88
+ 02 01 1A 0A FF 4C 00 10|.....L..
+ 05 03 1C 87 C8 A9 00 E1|........
+ 40 A1 69 E6 3A 24 AF CE|@.i.:$..
+ 71 C0 9A 8C CF 82 BA   |q...... 
+<info> app: scanned 84A954181E72
+<info> app: rssi -92
+ 02 01 1A 0A FF 4C 00 10|.....L..
+ 05 0A 18 87 6F C7 79 FC|....o.y.
+ 3B 2E C6 2B 6C A3 5C 2E|;..+l.\.
+ 2A 0D 0C 27 86 3C 5B   |*..'.<[ 
+<info> app: scanned 3D7928A4E74F
+<info> app: rssi -88
+ 02 01 1A 1A FF 4C 00 0C|.....L..
+ 0E 00 25 5D 4A 23 59 99|..%]J#Y.
+ 6C 73 CF 0B C1 0A 13 10|ls......
+ 05 0B 1C E4 FD 51 CE   |.....Q. 
+<info> app: scanned A1BB0F7E597B
+<info> app: rssi -86
+ 02 01 1A 0A FF 4C 00 10|.....L..
+ 05 03 18 CC 4C 5D 79 FC|....L]y.
+ 3B 2E C6 2B 6C A3 5C 2E|;..+l.\.
+ 2A 0D 0C 27 86 3C 5B   |*..'.<[ 
+<info> app: scanned D3B9C26A4C48
+<info> app: rssi -83
+ 02 01 1A 0A FF 4C 00 10|.....L..
+ 05 0A 1C F7 E5 1F 45 32|......E2
+ 05 FF F8 05 76 00 03 03|....v...
+ E3 FE 0C 27 86 3C 5B   |...'.<[ 
+<info> app: scanned 8C83411E1367
+<info> app: rssi -88
+ 1E FF 4C 00 07 19 01 02|..L.....
+ 20 0B 99 0F 01 00 00 C4| .......
+ 36 21 F3 41 42 49 A9 28|6!.ABI.(
+ C2 11 F4 35 A8 15 BB   |...5... 
+<info> app: scanned B5AFDC688ADE
+<info> app: rssi -70
+ 02 01 06 11 07 BA 56 89|......V.
+ A6 FA BF A2 BD 01 46 7D|......F}
+ 6E 19 63 AB AD 05 16 0A|n.c.....
+ 18 02 04 2A 12 13 CE   |...*... 
+<info> app: scanned 1287EB687D4F
+<info> app: rssi -88
+ 02 01 1A 0A FF 4C 00 10|.....L..
+ 05 01 98 A4 27 33 79 FC|....'3y.
+ 3B 2E C6 2B 6C A3 5C 2E|;..+l.\.
+ 2A 0D 0C 27 86 3C 5B   |*..'.<[ 
+<info> app: scanned CFCF6BAB0C4F
+<info> app: rssi -90
+ 02 01 1A 1A FF 4C 00 0C|.....L..
+ 0E 00 14 3F FD DC EB C7|...?....
+ 53 5B A9 67 09 1D AE 10|S[.g....
+ 05 0B 1C F8 7C F9 5B   |....|.[ 
+<info> app: scanned EEDDA57E2C46
+<info> app: rssi -85
+ 02 01 06 1A 09 41 70 70|.....App
+ 6C 65 20 50 65 6E 63 69|le Penci
+ 6C 00 00 00 00 00 00 00|l.......
+ 00 00 00 00 00 00 5B   |......[ 
+<info> app: scanned 12532487E277
+<info> app: rssi -87
+ 02 01 1A 1A FF 4C 00 0C|.....L..
+ 0E 00 9F 8A 52 8F E2 FA|....R...
+ 60 75 CE B9 6E 95 84 10|`u..n...
+ 05 0B 1C 00 5A 4F CE   |....ZO. 
+<info> app: scanned 2EAE5DD7F170
+<info> app: rssi -80
+ 02 01 1A 1A FF 4C 00 0C|.....L..
+ 0E 00 C0 79 4D 9D 6A C5|...yM.j.
+ 7D 49 05 8D 28 91 02 10|}I..(...
+ 05 0B 1C DC 64 10 5B   |....d.[ 
+<info> app: scanned B93CEDC537EC
+<info> app: rssi -90
+ 02 01 06 1A FF 4C 00 02|.....L..
+ 15 E1 F5 4E 02 1E 23 44|...N..#D
+ E0 9C 3D 51 2E B5 6A DE|..=Q..j.
+ C9 00 64 00 64 B9 CE   |..d.d.. 
+<info> app: scanned A1B53E9B7760
+<info> app: rssi -86
+ 02 01 1A 0A FF 4C 00 10|.....L..
+ 05 01 18 4D A3 7D 49 EB|...M.}I.
+ 8B BE F9 6D D6 2E 40 0E|...m..@.
+ 5B E5 6B 1A C2 02 CE   |[.k.... 
+<info> app: scanned 6C18E15DB446
+<info> app: rssi -86
+ 02 01 1A 0A FF 4C 00 10|.....L..
+ 05 01 18 B1 FA 8F 05 0B|........
+ 1C 23 DA 10 6C A3 5C 2E|.#..l.\.
+ 2A 0D 0C 27 86 3C 5B   |*..'.<[ 
+<info> app: scanned 07C38F513857
+<info> app: rssi -86
+ 02 01 1A 1A FF 4C 00 0C|.....L..
+ 0E 00 AA 12 DA B4 2C B7|......,.
+ E0 A2 D8 79 FB 0B 90 10|...y....
+ 05 1B 1C 30 68 D7 5B   |...0h.[ 
+<info> app: scanned CE667ACD357B
+<info> app: rssi -92
+ 02 01 1A 0A FF 4C 00 10|.....L..
+ 05 0A 1C B1 73 24 79 FC|....s$y.
+ 3B 2E C6 2B 6C A3 5C 2E|;..+l.\.
+ 2A 0D 0C 27 86 3C 5B   |*..'.<[ 
+<info> app: scanned 75D4AFA9DE41
+<info> app: rssi -92
+ 02 01 1A 0A FF 4C 00 10|.....L..
+ 05 01 1C E2 7A 37 09 53|....z7.S
+ 69 67 6E 61 6C 20 4C 61|ignal La
+ 62 73 08 20 C2 02 5B   |bs. ..[ 
+<info> app: scanned 4DE95E5E1D6D
+<info> app: rssi -87
+ 02 01 1A 0A FF 4C 00 10|.....L..
+ 05 01 1C 7E 37 96 84 0E|...~7...
+ 5D FC EB 2F 0B A0 80 CD|]../....
+ 05 DC F9 0C C2 01 5B   |......[ 
+<info> app: scanned 010A8EEFA36D
+<info> app: rssi -87
+ 02 01 1A 1A FF 4C 00 0C|.....L..
+ 0E 00 89 83 A5 B7 82 FD|........
+ 5A 49 D4 0F 97 F8 C1 10|ZI......
+ 05 07 1C 1D 64 BE CE   |....d.. 
+<info> app: scanned B78135C9926D
+<info> app: rssi -91
+ 02 01 1A 0A FF 4C 00 10|.....L..
+ 05 01 18 7D A1 BF F2 F5|...}....
+ 7B 20 9F 72 92 A3 0C 10|{ .r....
+ 05 0A 1C DC 64 10 5B   |....d.[ 
+Script done on 2019-04-04 10:31:41-0500

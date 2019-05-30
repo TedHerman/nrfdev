@@ -1,0 +1,143 @@
+PROJECT_NAME := pca10056
+TARGETS          := nrf52840_xxaa
+OUTPUT_DIRECTORY := _build
+
+$(OUTPUT_DIRECTORY)/nrf52840_xxaa.out: \
+  LINKER_SCRIPT  := config/s140.ld
+
+NORDIC_PATH = /home/herman/Desktop/nRF52840/SDK15.3
+
+TEMPLATE_PATH = $(NORDIC_PATH)/components/toolchain/gcc
+include config/Makefile.posix
+
+#source common to all targets
+SRC_FILES += \
+ $(NORDIC_PATH)/modules/nrfx/mdk/gcc_startup_nrf52840.S \
+{{{CFiles}}}
+{{{Source}}}
+
+
+#includes common to all targets
+INC_FOLDERS += config \
+{{{HFiles}}}
+
+# Libraries common to all targets
+LIB_FILES += \
+ $(NORDIC_PATH)/external/nrf_cc310/lib/cortex-m4/hard-float/libnrf_cc310_0.9.12.a \
+ $(NORDIC_PATH)/external/nrf_oberon/lib/cortex-m4/hard-float/liboberon_2.0.7.a \
+
+# Optimization flags
+#OPT = -O3 -g3
+OPT = -O3
+# Uncomment the line below to enable link time optimization
+#OPT += -flto
+
+# C flags common to all targets
+CFLAGS += $(OPT)
+CFLAGS += -DBLE_STACK_SUPPORT_REQD
+CFLAGS += -DBOARD_SPARKFUN_NRF52840_MINI
+CFLAGS += -DCONFIG_GPIO_AS_PINRESET
+CFLAGS += -DFLOAT_ABI_HARD
+CFLAGS += -DMBEDTLS_CONFIG_FILE=\"nrf_crypto_mbedtls_config.h\"
+CFLAGS += -DNRF52840_XXAA
+CFLAGS += -DNRF_CRYPTO_MAX_INSTANCE_COUNT=1
+CFLAGS += -DNRF_SD_BLE_API_VERSION=6
+CFLAGS += -DS140
+CFLAGS += -DSOFTDEVICE_PRESENT
+CFLAGS += -DSWI_DISABLE0
+CFLAGS += -DRAAL_SOFTDEVICE=1
+#CFLAGS += -DENABLE_DEBUG_LOG=1
+CFLAGS += -DDEBUG
+CFLAGS += -DuECC_ENABLE_VLI_API=0
+CFLAGS += -DuECC_OPTIMIZATION_LEVEL=3
+CFLAGS += -DuECC_SQUARE_FUNC=0
+CFLAGS += -DuECC_SUPPORT_COMPRESSED_POINT=0
+CFLAGS += -DuECC_VLI_NATIVE_LITTLE_ENDIAN=1
+CFLAGS += -mcpu=cortex-m4
+CFLAGS += -mthumb -mabi=aapcs
+CFLAGS += -Wall -Werror
+CFLAGS += -mfloat-abi=hard -mfpu=fpv4-sp-d16
+# keep every function in a separate section, this allows linker to discard unused ones
+CFLAGS += -ffunction-sections -fdata-sections -fno-strict-aliasing
+CFLAGS += -fno-builtin -fshort-enums -Wno-packed-bitfield-compat
+
+# C++ flags common to all targets
+CXXFLAGS += $(OPT)
+
+# Assembler flags common to all targets
+ASMFLAGS += -g3
+ASMFLAGS += -mcpu=cortex-m4
+ASMFLAGS += -mthumb -mabi=aapcs
+ASMFLAGS += -mfloat-abi=hard -mfpu=fpv4-sp-d16
+ASMFLAGS += -DBLE_STACK_SUPPORT_REQD
+ASMFLAGS += -DBOARD_SPARKFUN_NRF52840_MINI
+ASMFLAGS += -DCONFIG_GPIO_AS_PINRESET
+ASMFLAGS += -DFLOAT_ABI_HARD
+ASMFLAGS += -DNRF52840_XXAA
+ASMFLAGS += -DNRF_CRYPTO_MAX_INSTANCE_COUNT=1
+ASMFLAGS += -DNRF_SD_BLE_API_VERSION=6
+ASMFLAGS += -DS140
+ASMFLAGS += -DSOFTDEVICE_PRESENT
+ASMFLAGS += -DSWI_DISABLE0
+ASMFLAGS += -DRAAL_SOFTDEVICE=1
+ASMFLAGS += -DuECC_ENABLE_VLI_API=0
+ASMFLAGS += -DuECC_OPTIMIZATION_LEVEL=3
+ASMFLAGS += -DuECC_SQUARE_FUNC=0
+ASMFLAGS += -DuECC_SUPPORT_COMPRESSED_POINT=0
+ASMFLAGS += -DuECC_VLI_NATIVE_LITTLE_ENDIAN=1
+
+# Linker flags
+LDFLAGS += $(OPT)
+LDFLAGS += -mthumb -mabi=aapcs -L$(NORDIC_PATH)/modules/nrfx/mdk -T$(LINKER_SCRIPT)
+LDFLAGS += -mcpu=cortex-m4
+LDFLAGS += -mfloat-abi=hard -mfpu=fpv4-sp-d16
+# let linker dump unused sections
+LDFLAGS += -Wl,--gc-sections
+# use newlib in nano version
+LDFLAGS += --specs=nano.specs
+
+nrf52840_xxaa: CFLAGS += -D__HEAP_SIZE=8192
+nrf52840_xxaa: CFLAGS += -D__STACK_SIZE=8192
+nrf52840_xxaa: ASMFLAGS += -D__HEAP_SIZE=8192
+nrf52840_xxaa: ASMFLAGS += -D__STACK_SIZE=8192
+
+# Add standard libraries at the very end of the linker input, after all objects
+# that may need symbols provided by these libraries.
+LIB_FILES += -lc -lnosys -lm -lstdc++
+
+
+.PHONY: default help
+
+# Default target - first one defined
+default: nrf52840_xxaa
+
+# Print all targets that can be built
+help:
+	@echo following targets are available:
+	@echo		nrf52840_xxaa
+	@echo		flash_softdevice
+	@echo		flash      - flashing binary
+
+TEMPLATE_PATH := $(NORDIC_PATH)/components/toolchain/gcc
+
+
+include $(TEMPLATE_PATH)/Makefile.common
+
+$(foreach target, $(TARGETS), $(call define_target, $(target)))
+
+.PHONY: flash flash_softdevice erase
+
+# Flash the program
+flash: default
+	@echo Flashing: $(OUTPUT_DIRECTORY)/nrf52840_xxaa.hex
+	nrfjprog -f nrf52 --program $(OUTPUT_DIRECTORY)/nrf52840_xxaa.hex --sectorerase
+	nrfjprog -f nrf52 --reset
+
+# Flash softdevice
+flash_softdevice:
+	@echo Flashing: s140_nrf52_6.1.1_softdevice.hex
+	nrfjprog -f nrf52 --program $(NORDIC_PATH)/components/softdevice/s140/hex/s140_nrf52_6.1.1_softdevice.hex --sectorerase
+	nrfjprog -f nrf52 --reset
+
+erase:
+	nrfjprog -f nrf52 --eraseall

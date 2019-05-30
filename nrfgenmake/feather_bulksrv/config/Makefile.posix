@@ -1,0 +1,3 @@
+GNU_INSTALL_ROOT ?= /opt/gccarm/bin/
+GNU_VERSION ?= 8.2.1
+GNU_PREFIX ?= arm-none-eabi

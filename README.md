@@ -9,8 +9,8 @@ bus pirate support (a python library "pyBusPirateLite"), a requirement
 to get this working is to download and install that dependency (or
 just make a symbolic link).            
 
-nrfgenmake has other python scripts; it's goal is to read the 
-source files of a project and automatically generate a Makefile 
+nrfgenmake has other python scripts; it reads 
+files of a project and generates a Makefile 
 suitable to GCC arm (tested with arm-none-eabi). The goal is to 
 automate building new nRF52 projects.  This is very 
 incomplete, only a work-in-progress. Some example projects are 

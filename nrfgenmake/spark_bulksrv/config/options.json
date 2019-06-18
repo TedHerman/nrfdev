@@ -1,4 +1,4 @@
-{"nordicbase":"/home/herman/Desktop/nRF52840/SDK15.3",
+{"nordicbase":"$NORDIC_BASE",
  "source":["bulksrv.c","app_error_weak.c"],
  "excludes":["app_error_handler_iar.c",
 	     "app_uart_fifo.c",

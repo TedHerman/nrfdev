@@ -19,6 +19,10 @@
 #define UART_RX_BUF_SIZE 256                         /**< UART RX buffer size. */
 #define UART_HWFC APP_UART_FLOW_CONTROL_DISABLED
 
+extern void neopixel_init(void);
+extern void neopixel_write (uint8_t *pixels);
+extern void neopixel_teardown(void);
+
 void uart_error_handle(app_uart_evt_t * p_event) {
   if (p_event->evt_type == APP_UART_COMMUNICATION_ERROR) {
     APP_ERROR_HANDLER(p_event->data.error_communication);
@@ -46,10 +50,28 @@ uint32_t counter = 0;
 
 // flip led and reset timer randomly
 void flipled(void * parameter, uint16_t size) {
-    uint8_t * p = (uint8_t*)&randvalue;	
+    uint8_t * p = (uint8_t*)&randvalue;
+    uint8_t rgb0[3] = {0x11,0x00,0x11};
+    uint8_t rgb1[3] = {0x00,0x11,0x00};
+    uint8_t rgb2[3] = {0x11,0x11,0x00};
+    uint8_t rgb3[3] = {0x00,0x11,0x11};
+    uint8_t * rgb;
+    switch (counter % 4) {
+       case 0: rgb = rgb0; break;
+       case 1: rgb = rgb1; break;
+       case 2: rgb = rgb2; break;
+       case 3: rgb = rgb3; break;
+       default: rgb = rgb0;
+       }	    
     NRF_LOG_INFO("blink %d",counter++);
-    if (counter%2 == 0) bsp_board_led_invert(1);
-    else bsp_board_led_invert(0);
+    neopixel_write(rgb);
+    bsp_board_led_invert(0);
+    if (counter % 2 == 0) {
+      bsp_board_led_invert(0);
+      }
+    else {
+      bsp_board_led_invert(1);
+      }
     err_code = nrf_drv_rng_rand(p,4);
     APP_ERROR_CHECK(err_code);
     err_code = app_timer_start(blink_timer_id,
@@ -65,7 +87,9 @@ static void blink_timeout_handler(void * p_context) {
 void initialize() {
     // configure board for leds, set up clock and rng 
     bsp_board_init(BSP_INIT_LEDS);
+    neopixel_init();
     bsp_board_led_on(1);
+    bsp_board_led_on(0);
 /*
     const app_uart_comm_params_t comm_params = {
           RX_PIN_NUMBER,

@@ -1,6 +1,6 @@
 PROJECT_NAME := pca10028
 
-NORDIC_PATH = {{{nordicbase}}}
+NORDIC_PATH = $(NORDIC_BASE)
 
 export OUTPUT_FILENAME
 #MAKEFILE_NAME := $(CURDIR)/$(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST))

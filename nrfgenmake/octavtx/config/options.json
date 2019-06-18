@@ -1,4 +1,4 @@
-{"nordicbase":"/home/herman/Desktop/nRF52840/SDK15.3",
+{"nordicbase":"$NORDIC_BASE",
  "source":"main.c",
  "excludes":["app_error_handler_iar.c",
              "app_error_handler_keil.c",
@@ -24,6 +24,7 @@
              "nrfx_uarte.c",
              "nrf_drv_uart.c",
              "nrf_log_backend_uart.c",
+	     "nrf_section_iter.c",
              "SEGGER_RTT.c",
              "SEGGER_RTT_printf.c",
              "SEGGER_RTT_Syscalls_GCC.c",

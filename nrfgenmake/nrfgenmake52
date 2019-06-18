@@ -94,6 +94,8 @@ class cobook(object):
     parameters are list of includes, list of excludes, sourcefile, 
                    platform, and softdevice
     '''
+    if nordicbase.startswith("$") and os.getenv(nordicbase[1:]):
+       nordicbase = os.getenv(nordicbase[1:]) 
     self.nordicbase = nordicbase
     self.includes = includes
     self.excludes = excludes

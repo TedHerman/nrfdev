@@ -218,6 +218,7 @@ void nrf_802154_received_timestamp_raw(uint8_t * p_data, int8_t power, uint8_t l
     UNUSED_PARAMETER(lqi);
     if (q->type == 0x36) {
        clock = *(uint32_t *)q->data;
+       nrfx_wdt_feed();
        nrf_802154_buffer_free_raw(p_data);
        return;
        }
@@ -377,9 +378,14 @@ uint32_t random_write_delay(uint32_t bound) {
 
 void watchdog_handler(void) { };
 void watchdog_init(void) {
+    // see config/sdk_config.h for NRF_WDT_etc values 
+    ret_code_t err_code;
     nrfx_wdt_channel_id m_channel = 0;
-    nrfx_wdt_config_t config = NRFX_WDT_DEAFULT_CONFIG;
-    uint32_t err_code = nrfx_wdt_init(&config,watchdog_handler);
+    nrfx_wdt_config_t config = {
+      .behaviour          = (nrf_wdt_behaviour_t)NRFX_WDT_CONFIG_BEHAVIOUR, 
+      .reload_value       = 60000, 
+      NRFX_WDT_IRQ_CONFIG };
+    err_code = nrfx_wdt_init(&config,watchdog_handler);
     APP_ERROR_CHECK(err_code);
     err_code = nrfx_wdt_channel_alloc(&m_channel);
     APP_ERROR_CHECK(err_code);

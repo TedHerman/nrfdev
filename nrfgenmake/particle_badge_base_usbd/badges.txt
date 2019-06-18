@@ -1,0 +1,545 @@
+one
+
+Mote 1 at time 32
+Mote 1 at time 33
+Mote 1 at time 34
+Mote 1 at time 35
+Mote 1 at time 36
+Mote 1 at time 37
+Mote 1 at time 38
+Mote 1 at time 39
+Mote 1 at time 40
+Mote 1 at time 41
+Mote 1 at time 42
+Mote 1 at time 43
+Mote 1 at time 44
+Mote 1 at time 45
+Mote 1 at time 46
+Mote 1 at time 2019-06-16 20:41:13
+Mote 1 at time 2019-06-16 20:41:14
+Mote 1 at time 2019-06-16 20:41:15
+Mote 1 at time 2019-06-16 20:41:16
+Mote 1 at time 2019-06-16 20:41:17
+Mote 1 at time 2019-06-16 20:41:18
+Mote 1 at time 2019-06-16 20:41:19
+Mote 1 at time 2019-06-16 20:41:20
+Mote 1 at time 2019-06-16 20:41:21
+Mote 1 at time 2019-06-16 20:41:22
+Mote 1 at time 2019-06-16 20:41:23
+Mote 1 at time 2019-06-16 20:41:24
+Mote 1 at time 2019-06-16 20:41:25
+Mote 1 at time 2019-06-16 20:41:26
+Mote 1 at time 2019-06-16 20:41:27
+Mote 1 at time 2019-06-16 20:41:28
+Mote 1 at time 2019-06-16 20:41:29
+Mote 1 at time 2019-06-16 20:41:30
+Mote 1 at time 2019-06-16 20:41:31
+Mote 1 at time 2019-06-16 20:41:32
+Mote 1 at time 2019-06-16 20:41:33
+Mote 1 at time 2019-06-16 20:41:34
+Mote 1 at time 2019-06-16 20:41:35
+Mote 1 at time 2019-06-16 20:41:36
+Mote 1 at time 2019-06-16 20:41:37
+Mote 1 at time 2019-06-16 20:41:38
+Mote 1 at time 2019-06-16 20:41:39
+Mote 1 at time 2019-06-16 20:41:40
+Mote 1 at time 2019-06-16 20:41:41
+Mote 1 at time 2019-06-16 20:41:42
+Mote 1 at time 2019-06-16 20:41:43
+Mote 1 at time 2019-06-16 20:41:44
+Mote 1 at time 2019-06-16 20:41:45
+Mote 1 at time 2019-06-16 20:41:46
+Mote 1 at time 2019-06-16 20:41:47
+Mote 1 at time 2019-06-16 20:41:48
+Mote 1 at time 2019-06-16 20:41:49
+Mote 1 at time 2019-06-16 20:41:50
+Mote 1 at time 2019-06-16 20:41:51
+Mote 1 at time 2019-06-16 20:41:52
+Mote 1 at time 2019-06-16 20:41:53
+Mote 1 at time 2019-06-16 20:41:54
+Mote 1 at time 2019-06-16 20:41:55
+Mote 1 at time 2019-06-16 20:41:56
+Mote 1 at time 2019-06-16 20:41:57
+Mote 1 at time 2019-06-16 20:41:58
+Mote 1 at time 2019-06-16 20:41:58
+Mote 1 at time 2019-06-16 20:41:59
+Mote 1 at time 2019-06-16 20:42:00
+Mote 1 at time 2019-06-16 20:42:01
+Mote 1 at time 2019-06-16 20:42:02
+Mote 1 at time 2019-06-16 20:42:03
+Mote 1 at time 2019-06-16 20:42:04
+Mote 1 at time 2019-06-16 20:42:05
+Mote 1 at time 2019-06-16 20:42:06
+Mote 1 at time 2019-06-16 20:42:08
+---------------------------------
+two
+
+Mote 1 at time 2019-06-16 20:42:11
+Mote 1 at time 2019-06-16 20:42:12
+Mote 1 at time 2019-06-16 20:42:13
+Mote 1 at time 2019-06-16 20:42:14
+Mote 1 at time 2019-06-16 20:42:15
+Mote 1 at time 2019-06-16 20:42:16
+Mote 1 at time 2019-06-16 20:42:17
+Mote 1 at time 2019-06-16 20:42:18
+Mote 1 at time 2019-06-16 20:42:19
+Mote 1 at time 2019-06-16 20:42:20
+Mote 1 at time 2019-06-16 20:42:21
+Mote 1 at time 2019-06-16 20:42:22
+Mote 1 at time 2019-06-16 20:42:23
+Mote 1 at time 2019-06-16 20:42:24
+Mote 1 at time 2019-06-16 20:42:25
+Mote 1 at time 2019-06-16 20:42:26
+Mote 1 at time 2019-06-16 20:42:27
+Mote 1 at time 2019-06-16 20:42:28
+Mote 1 at time 2019-06-16 20:42:29
+Mote 1 at time 2019-06-16 20:42:30
+Mote 1 at time 2019-06-16 20:42:31
+Mote 1 at time 2019-06-16 20:42:32
+Mote 1 at time 2019-06-16 20:42:34
+Mote 1 at time 2019-06-16 20:42:35
+Mote 1 at time 2019-06-16 20:42:36
+Mote 1 at time 2019-06-16 20:42:36
+Mote 1 at time 2019-06-16 20:42:37
+Mote 1 at time 2019-06-16 20:42:38
+Mote 1 at time 2019-06-16 20:42:39
+Mote 1 at time 2019-06-16 20:42:40
+Mote 1 at time 2019-06-16 20:42:41
+Mote 1 at time 2019-06-16 20:42:42
+Mote 1 at time 2019-06-16 20:42:43
+Mote 1 at time 2019-06-16 20:42:44
+Mote 1 at time 2019-06-16 20:42:45
+Mote 1 at time 2019-06-16 20:42:46
+Mote 1 at time 2019-06-16 20:42:47
+Mote 1 at time 2019-06-16 20:42:48
+Mote 1 at time 2019-06-16 20:42:49
+Mote 1 at time 2019-06-16 20:42:50
+Mote 1 at time 2019-06-16 20:42:51
+Mote 1 at time 2019-06-16 20:42:52
+Mote 1 at time 2019-06-16 20:42:53
+Mote 1 at time 2019-06-16 20:42:54
+Mote 1 at time 2019-06-16 20:42:55
+Mote 1 at time 2019-06-16 20:42:56
+Mote 1 at time 2019-06-16 20:42:57
+Mote 1 at time 2019-06-16 20:42:58
+Mote 1 at time 2019-06-16 20:42:59
+Mote 1 at time 2019-06-16 20:43:00
+Mote 1 at time 2019-06-16 20:43:01
+Mote 1 at time 2019-06-16 20:43:02
+Mote 1 at time 2019-06-16 20:43:03
+Mote 1 at time 2019-06-16 20:43:04
+Mote 1 at time 2019-06-16 20:43:05
+Mote 1 at time 2019-06-16 20:43:06
+Mote 1 at time 2019-06-16 20:43:07
+Mote 1 at time 2019-06-16 20:43:08
+Mote 1 at time 2019-06-16 20:43:09
+Mote 1 at time 2019-06-16 20:43:10
+Mote 1 at time 2019-06-16 20:43:11
+Mote 1 at time 2019-06-16 20:43:12
+Mote 1 at time 2019-06-16 20:43:13
+Mote 1 at time 2019-06-16 20:43:14
+Mote 1 at time 2019-06-16 20:43:15
+Mote 1 at time 2019-06-16 20:43:16
+Mote 1 at time 2019-06-16 20:43:17
+Mote 1 at time 2019-06-16 20:43:18
+Mote 1 at time 2019-06-16 20:43:19
+Mote 1 at time 2019-06-16 20:43:21
+Mote 1 at time 2019-06-16 20:43:22
+Mote 1 at time 2019-06-16 20:43:23
+Mote 1 at time 2019-06-16 20:43:24
+Mote 1 at time 2019-06-16 20:43:25
+Mote 1 at time 2019-06-16 20:43:26
+Mote 1 at time 2019-06-16 20:43:27
+Mote 1 at time 2019-06-16 20:43:28
+Mote 1 at time 2019-06-16 20:43:29
+Mote 1 at time 2019-06-16 20:43:30
+Mote 1 at time 2019-06-16 20:43:31
+---------------------------------
+one
+
+go
+
+go
+
+e
+
+ge
+
+Mote 5 at time 2042-06-09 15:14:11 base rssi 0
+Mote 6 at time 2042-06-09 15:14:11 base rssi 0
+Mote 7 at time 2042-06-09 15:14:11 base rssi 0
+Mote 8 at time 2042-06-09 15:14:11 base rssi 0
+Mote 9 at time 2042-06-09 15:14:11 base rssi 0
+Mote 10 at time 2042-06-09 15:14:11 base rssi 0
+Mote 11 at time 2042-06-09 15:14:11 base rssi 0
+Mote 12 at time 2042-06-09 15:14:11 base rssi 0
+Mote 13 at time 2042-06-09 15:14:11 base rssi 0
+Mote 14 at time 2042-06-09 15:14:11 base rssi 0
+Mote 16 at time 2042-06-09 15:14:11 base rssi 0
+Mote 17 at time 2042-06-09 15:14:11 base rssi 0
+Mote 18 at time 2042-06-09 15:14:11 base rssi 0
+Mote 19 at time 2042-06-09 15:14:11 base rssi 0
+Mote 20 at time 2042-06-09 15:14:11 base rssi 0
+Mote 21 at time 2042-06-09 15:14:11 base rssi 0
+Mote 22 at time 2042-06-09 15:14:11 base rssi 0
+Mote 23 at time 2042-06-09 15:14:11 base rssi 0
+e
+
+e
+
+e
+
+e
+
+Mote 65 at time 708263680 saw 93 with rssi 1 saw 0 with rssi 0 saw 0 with rssi 0 saw 0 with rssi 0 saw 0 with rssi 0 saw 0 with rssi 0 saw 0 with rssi 0 saw 0 with rssi 0 base rssi 0
+Mote 65 at time 725040896 saw 93 with rssi 1 saw 0 with rssi 0 saw 0 with rssi 0 saw 0 with rssi 0 saw 0 with rssi 0 saw 0 with rssi 0 saw 0 with rssi 0 saw 0 with rssi 0 base rssi 0
+Mote 65 at time 741818112 saw 93 with rssi 1 saw 0 with rssi 0 saw 0 with rssi 0 saw 0 with rssi 0 saw 0 with rssi 0 saw 0 with rssi 0 saw 0 with rssi 0 saw 0 with rssi 0 base rssi 0
+Mote 65 at time 758595328 saw 93 with rssi 1 saw 0 with rssi 0 saw 0 with rssi 0 saw 0 with rssi 0 saw 0 with rssi 0 saw 0 with rssi 0 saw 0 with rssi 0 saw 0 with rssi 0 base rssi 0
+Mote 65 at time 775372544 saw 93 with rssi 1 saw 0 with rssi 0 saw 0 with rssi 0 saw 0 with rssi 0 saw 0 with rssi 0 saw 0 with rssi 0 saw 0 with rssi 0 saw 0 with rssi 0 base rssi 0
+Mote 65 at time 792149760 saw 93 with rssi 1 saw 0 with rssi 0 saw 0 with rssi 0 saw 0 with rssi 0 saw 0 with rssi 0 saw 0 with rssi 0 saw 0 with rssi 0 saw 0 with rssi 0 base rssi 0
+Mote 65 at time 808926976 saw 93 with rssi 1 saw 0 with rssi 0 saw 0 with rssi 0 saw 0 with rssi 0 saw 0 with rssi 0 saw 0 with rssi 0 saw 0 with rssi 0 saw 0 with rssi 0 base rssi 0
+e
+
+e
+
+Mote 59 at time 2042-06-09 15:14:11 base rssi 0
+Mote 60 at time 2042-06-09 15:14:11 base rssi 0
+Mote 61 at time 2042-06-09 15:14:11 base rssi 0
+e
+
+Mote 122 at time 2042-06-09 15:14:11 base rssi 0
+Mote 123 at time 2042-06-09 15:14:11 base rssi 0
+Mote 124 at time 2042-06-09 15:14:11 base rssi 0
+g
+
+Mote 171 at time 2042-06-09 15:14:11 base rssi 0
+Mote 172 at time 2042-06-09 15:14:11 base rssi 0
+g
+
+Mote 1 at time 2019-06-17 20:45:22 base rssi 0
+Mote 1 at time 2019-06-17 20:45:23 base rssi 0
+Mote 1 at time 2019-06-17 20:45:24 base rssi 0
+Mote 1 at time 2019-06-17 20:45:25 base rssi 0
+Mote 1 at time 2019-06-17 20:45:26 base rssi 0
+Mote 1 at time 2019-06-17 20:45:27 base rssi 0
+g
+
+Mote 1 at time 2019-06-17 20:46:41 base rssi 175
+Mote 1 at time 2019-06-17 20:46:42 base rssi 176
+Mote 1 at time 2019-06-17 20:46:43 base rssi 174
+Mote 1 at time 2019-06-17 20:46:44 base rssi 174
+Mote 1 at time 2019-06-17 20:46:45 base rssi 176
+Mote 1 at time 2019-06-17 20:46:46 base rssi 178
+Mote 1 at time 2019-06-17 20:46:47 base rssi 176
+Mote 1 at time 2019-06-17 20:46:48 base rssi 175
+e
+
+Mote 1 at time 2019-06-17 20:47:00 base rssi 177
+Mote 1 at time 2019-06-17 20:47:01 base rssi 175
+Mote 1 at time 2019-06-17 20:47:02 base rssi 176
+Mote 1 at time 2019-06-17 20:47:03 base rssi 176
+Mote 1 at time 2019-06-17 20:47:04 base rssi 181
+Mote 1 at time 2019-06-17 20:47:05 base rssi 178
+Mote 1 at time 2019-06-17 20:47:06 base rssi 180
+Mote 1 at time 2019-06-17 20:47:07 base rssi 184
+Mote 1 at time 2019-06-17 20:47:08 base rssi 182
+Mote 1 at time 2019-06-17 20:47:09 base rssi 182
+Mote 1 at time 2019-06-17 20:47:10 base rssi 181
+Mote 1 at time 2019-06-17 20:47:12 base rssi 176
+Mote 1 at time 2019-06-17 20:47:13 base rssi 182
+Mote 1 at time 2019-06-17 20:47:14 base rssi 183
+Mote 1 at time 2019-06-17 20:47:15 base rssi 187
+Mote 1 at time 2019-06-17 20:47:16 base rssi 186
+Mote 1 at time 2019-06-17 20:47:17 base rssi 188
+Mote 1 at time 2019-06-17 20:47:18 base rssi 180
+Mote 1 at time 0 base rssi 188
+Mote 1 at time 0 base rssi 194
+Mote 1 at time 2019-06-17 20:47:37 base rssi 206
+Mote 1 at time 2019-06-17 20:47:38 base rssi 202
+Mote 1 at time 2019-06-17 20:47:39 base rssi 201
+Mote 1 at time 2019-06-17 20:47:40 base rssi 201
+Mote 1 at time 2019-06-17 20:47:41 base rssi 202
+Mote 1 at time 2019-06-17 20:47:42 base rssi 201
+Mote 1 at time 2019-06-17 20:47:43 base rssi 202
+Mote 1 at time 2019-06-17 20:47:44 base rssi 202
+Mote 1 at time 2019-06-17 20:47:45 base rssi 203
+Mote 1 at time 2019-06-17 20:47:46 base rssi 204
+Mote 1 at time 2019-06-17 20:47:47 base rssi 203
+Mote 1 at time 2019-06-17 20:47:48 base rssi 200
+Mote 1 at time 2019-06-17 20:47:49 base rssi 200
+Mote 1 at time 2019-06-17 20:47:50 base rssi 201
+Mote 1 at time 2019-06-17 20:47:51 base rssi 202
+Mote 1 at time 2019-06-17 20:47:52 base rssi 202
+Mote 1 at time 2019-06-17 20:47:53 base rssi 202
+Mote 1 at time 2019-06-17 20:47:54 base rssi 202
+Mote 1 at time 2019-06-17 20:47:55 base rssi 202
+Mote 1 at time 2019-06-17 20:47:56 base rssi 202
+Mote 2 at time 0 base rssi 179
+Mote 1 at time 2019-06-17 20:47:57 base rssi 202
+Mote 1 at time 2019-06-17 20:47:58 saw 2 with rssi 183 base rssi 202
+Mote 2 at time 0 saw 1 with rssi 171 base rssi 186
+Mote 1 at time 2019-06-17 20:47:59 saw 2 with rssi 188 base rssi 202
+Mote 2 at time 2019-06-17 20:47:59 base rssi 185
+Mote 2 at time 2019-06-17 20:48:00 base rssi 185
+Mote 1 at time 2019-06-17 20:48:00 saw 2 with rssi 190 base rssi 202
+Mote 1 at time 2019-06-17 20:48:01 saw 2 with rssi 189 base rssi 202
+Mote 2 at time 2019-06-17 20:48:01 saw 1 with rssi 192 base rssi 180
+Mote 1 at time 2019-06-17 20:48:02 saw 2 with rssi 190 base rssi 202
+Mote 2 at time 2019-06-17 20:48:02 base rssi 178
+Mote 1 at time 2019-06-17 20:48:03 saw 2 with rssi 190 base rssi 202
+Mote 2 at time 2019-06-17 20:48:03 base rssi 173
+Mote 1 at time 2019-06-17 20:48:04 base rssi 201
+Mote 2 at time 2019-06-17 20:48:04 saw 1 with rssi 193 base rssi 172
+Mote 2 at time 2019-06-17 20:48:05 base rssi 172
+Mote 1 at time 2019-06-17 20:48:05 saw 2 with rssi 193 base rssi 202
+Mote 1 at time 2019-06-17 20:48:06 saw 2 with rssi 193 base rssi 202
+Mote 2 at time 2019-06-17 20:48:06 saw 1 with rssi 193 base rssi 169
+Mote 1 at time 2019-06-17 20:48:07 saw 2 with rssi 193 base rssi 202
+Mote 2 at time 2019-06-17 20:48:07 base rssi 172
+---------------------------------
+two
+
+Mote 2 at time 2019-06-17 20:48:08 saw 1 with rssi 193 base rssi 173
+Mote 1 at time 2019-06-17 20:48:08 saw 2 with rssi 193 base rssi 201
+Mote 1 at time 2019-06-17 20:48:10 saw 2 with rssi 193 base rssi 202
+Mote 2 at time 2019-06-17 20:48:10 saw 1 with rssi 193 base rssi 174
+Mote 1 at time 2019-06-17 20:48:11 base rssi 202
+Mote 2 at time 2019-06-17 20:48:11 saw 1 with rssi 193 base rssi 180
+Mote 1 at time 2019-06-17 20:48:12 saw 2 with rssi 192 base rssi 201
+Mote 2 at time 2019-06-17 20:48:12 base rssi 181
+Mote 1 at time 2019-06-17 20:48:13 saw 2 with rssi 192 base rssi 202
+Mote 2 at time 2019-06-17 20:48:13 base rssi 177
+Mote 1 at time 2019-06-17 20:48:14 saw 2 with rssi 193 base rssi 202
+Mote 2 at time 2019-06-17 20:48:14 base rssi 176
+Mote 1 at time 2019-06-17 20:48:15 saw 2 with rssi 192 base rssi 202
+Mote 2 at time 2019-06-17 20:48:15 base rssi 175
+Mote 1 at time 2019-06-17 20:48:16 saw 2 with rssi 192 base rssi 202
+Mote 2 at time 2019-06-17 20:48:16 base rssi 174
+Mote 1 at time 2019-06-17 20:48:17 saw 2 with rssi 192 base rssi 202
+Mote 2 at time 2019-06-17 20:48:17 saw 1 with rssi 193 base rssi 174
+Mote 1 at time 2019-06-17 20:48:18 saw 2 with rssi 193 base rssi 202
+Mote 2 at time 2019-06-17 20:48:18 base rssi 173
+Mote 1 at time 2019-06-17 20:48:19 saw 2 with rssi 193 base rssi 202
+Mote 2 at time 2019-06-17 20:48:19 base rssi 173
+Mote 1 at time 2019-06-17 20:48:20 saw 2 with rssi 193 base rssi 202
+Mote 2 at time 2019-06-17 20:48:20 base rssi 174
+Mote 1 at time 2019-06-17 20:48:21 base rssi 202
+Mote 2 at time 2019-06-17 20:48:21 saw 1 with rssi 193 base rssi 173
+Mote 1 at time 2019-06-17 20:48:22 saw 2 with rssi 193 base rssi 202
+Mote 2 at time 2019-06-17 20:48:22 base rssi 172
+Mote 2 at time 2019-06-17 20:48:23 base rssi 173
+Mote 1 at time 2019-06-17 20:48:23 base rssi 201
+Mote 1 at time 2019-06-17 20:48:24 saw 2 with rssi 192 base rssi 202
+Mote 2 at time 2019-06-17 20:48:24 saw 1 with rssi 192 base rssi 170
+Mote 1 at time 2019-06-17 20:48:25 saw 2 with rssi 191 base rssi 201
+Mote 2 at time 2019-06-17 20:48:25 saw 1 with rssi 192 base rssi 167
+Mote 2 at time 2019-06-17 20:48:26 saw 1 with rssi 193 base rssi 168
+Mote 1 at time 2019-06-17 20:48:26 saw 2 with rssi 192 base rssi 202
+Mote 2 at time 2019-06-17 20:48:27 saw 1 with rssi 193 base rssi 163
+Mote 1 at time 2019-06-17 20:48:27 saw 2 with rssi 192 base rssi 201
+Mote 1 at time 2019-06-17 20:48:28 saw 2 with rssi 193 base rssi 201
+Mote 2 at time 2019-06-17 20:48:28 saw 1 with rssi 193 base rssi 175
+Mote 2 at time 2019-06-17 20:48:29 base rssi 180
+Mote 1 at time 2019-06-17 20:48:29 saw 2 with rssi 191 base rssi 201
+Mote 1 at time 2019-06-17 20:48:30 saw 2 with rssi 190 base rssi 202
+Mote 2 at time 2019-06-17 20:48:30 saw 1 with rssi 189 base rssi 181
+Mote 1 at time 2019-06-17 20:48:31 base rssi 201
+Mote 2 at time 2019-06-17 20:48:31 saw 1 with rssi 192 base rssi 185
+Mote 2 at time 2019-06-17 20:48:32 base rssi 184
+Mote 1 at time 2019-06-17 20:48:32 saw 2 with rssi 191 base rssi 201
+Mote 1 at time 2019-06-17 20:48:33 saw 2 with rssi 192 base rssi 201
+Mote 2 at time 2019-06-17 20:48:33 saw 1 with rssi 193 base rssi 184
+Mote 1 at time 2019-06-17 20:48:34 base rssi 201
+Mote 2 at time 2019-06-17 20:48:34 base rssi 179
+Mote 1 at time 2019-06-17 20:48:35 saw 2 with rssi 193 base rssi 202
+Mote 2 at time 2019-06-17 20:48:35 base rssi 183
+Mote 1 at time 2019-06-17 20:48:36 saw 2 with rssi 192 base rssi 201
+Mote 2 at time 2019-06-17 20:48:36 base rssi 181
+Mote 1 at time 2019-06-17 20:48:37 saw 2 with rssi 192 base rssi 202
+Mote 2 at time 2019-06-17 20:48:37 base rssi 182
+Mote 1 at time 2019-06-17 20:48:38 saw 2 with rssi 189 base rssi 202
+Mote 2 at time 2019-06-17 20:48:38 saw 1 with rssi 193 base rssi 183
+Mote 2 at time 2019-06-17 20:48:39 base rssi 183
+Mote 1 at time 2019-06-17 20:48:39 saw 2 with rssi 193 base rssi 201
+Mote 1 at time 2019-06-17 20:48:40 saw 2 with rssi 190 base rssi 202
+Mote 2 at time 2019-06-17 20:48:40 saw 1 with rssi 192 base rssi 185
+Mote 1 at time 2019-06-17 20:48:41 saw 2 with rssi 190 base rssi 202
+Mote 2 at time 2019-06-17 20:48:41 base rssi 187
+Mote 2 at time 2019-06-17 20:48:42 base rssi 185
+Mote 1 at time 2019-06-17 20:48:42 saw 2 with rssi 194 base rssi 201
+Mote 2 at time 2019-06-17 20:48:43 saw 1 with rssi 193 base rssi 184
+Mote 1 at time 2019-06-17 20:48:43 saw 2 with rssi 194 base rssi 201
+Mote 2 at time 2019-06-17 20:48:44 saw 1 with rssi 191 base rssi 184
+Mote 1 at time 2019-06-17 20:48:44 saw 2 with rssi 191 base rssi 201
+Mote 1 at time 2019-06-17 20:48:45 saw 2 with rssi 191 base rssi 201
+Mote 2 at time 2019-06-17 20:48:45 saw 1 with rssi 190 base rssi 184
+Mote 2 at time 2019-06-17 20:48:46 base rssi 184
+Mote 1 at time 2019-06-17 20:48:46 saw 2 with rssi 193 base rssi 201
+Mote 1 at time 2019-06-17 20:48:46 saw 2 with rssi 192 base rssi 202
+Mote 2 at time 2019-06-17 20:48:47 saw 1 with rssi 192 base rssi 184
+Mote 2 at time 2019-06-17 20:48:48 base rssi 184
+Mote 1 at time 2019-06-17 20:48:47 base rssi 202
+Mote 1 at time 2019-06-17 20:48:48 saw 2 with rssi 191 base rssi 201
+Mote 2 at time 2019-06-17 20:48:49 saw 1 with rssi 192 base rssi 181
+Mote 2 at time 2019-06-17 20:48:50 saw 1 with rssi 192 base rssi 183
+Mote 1 at time 2019-06-17 20:48:49 base rssi 202
+Mote 1 at time 2019-06-17 20:48:50 saw 2 with rssi 190 base rssi 201
+Mote 2 at time 2019-06-17 20:48:51 saw 1 with rssi 191 base rssi 182
+Mote 1 at time 2019-06-17 20:48:51 base rssi 201
+Mote 2 at time 2019-06-17 20:48:52 base rssi 181
+Mote 1 at time 2019-06-17 20:48:52 saw 2 with rssi 191 base rssi 201
+Mote 2 at time 2019-06-17 20:48:53 base rssi 182
+Mote 1 at time 2019-06-17 20:48:53 saw 2 with rssi 192 base rssi 201
+Mote 2 at time 2019-06-17 20:48:54 base rssi 182
+Mote 1 at time 2019-06-17 20:48:54 saw 2 with rssi 192 base rssi 201
+Mote 2 at time 2019-06-17 20:48:55 saw 1 with rssi 193 base rssi 183
+Mote 1 at time 2019-06-17 20:48:55 base rssi 201
+Mote 2 at time 2019-06-17 20:48:56 saw 1 with rssi 193 base rssi 183
+Mote 1 at time 2019-06-17 20:48:56 saw 2 with rssi 192 base rssi 201
+Mote 2 at time 2019-06-17 20:48:57 base rssi 182
+Mote 2 at time 2019-06-17 20:48:58 saw 1 with rssi 192 base rssi 182
+Mote 1 at time 2019-06-17 20:48:57 saw 2 with rssi 192 base rssi 201
+Mote 1 at time 2019-06-17 20:48:58 saw 2 with rssi 192 base rssi 201
+Mote 2 at time 2019-06-17 20:48:59 saw 1 with rssi 193 base rssi 182
+Mote 1 at time 2019-06-17 20:48:59 saw 2 with rssi 191 base rssi 201
+Mote 2 at time 2019-06-17 20:49:00 saw 1 with rssi 192 base rssi 182
+Mote 2 at time 2019-06-17 20:49:01 base rssi 182
+Mote 1 at time 2019-06-17 20:49:00 base rssi 201
+Mote 1 at time 2019-06-17 20:49:01 saw 2 with rssi 192 base rssi 201
+Mote 2 at time 2019-06-17 20:49:02 saw 1 with rssi 192 base rssi 182
+Mote 2 at time 2019-06-17 20:49:03 base rssi 182
+Mote 1 at time 2019-06-17 20:49:02 saw 2 with rssi 192 base rssi 201
+Mote 2 at time 2019-06-17 20:49:04 saw 1 with rssi 192 base rssi 182
+Mote 1 at time 2019-06-17 20:49:03 saw 2 with rssi 191 base rssi 201
+Mote 1 at time 2019-06-17 20:49:04 saw 2 with rssi 191 base rssi 201
+Mote 2 at time 2019-06-17 20:49:05 base rssi 185
+Mote 1 at time 2019-06-17 20:49:05 saw 2 with rssi 191 base rssi 201
+Mote 2 at time 2019-06-17 20:49:06 base rssi 185
+Mote 1 at time 2019-06-17 20:49:06 saw 2 with rssi 191 base rssi 201
+Mote 2 at time 2019-06-17 20:49:07 base rssi 185
+Mote 1 at time 2019-06-17 20:49:07 saw 2 with rssi 191 base rssi 201
+Mote 2 at time 2019-06-17 20:49:08 base rssi 185
+Mote 2 at time 2019-06-17 20:49:09 base rssi 185
+Mote 1 at time 2019-06-17 20:49:08 saw 2 with rssi 191 base rssi 201
+Mote 2 at time 2019-06-17 20:49:10 saw 1 with rssi 193 base rssi 185
+Mote 1 at time 2019-06-17 20:49:09 saw 2 with rssi 192 base rssi 201
+Mote 1 at time 2019-06-17 20:49:10 saw 2 with rssi 192 base rssi 201
+Mote 2 at time 2019-06-17 20:49:11 saw 1 with rssi 192 base rssi 185
+Mote 1 at time 2019-06-17 20:49:11 saw 2 with rssi 192 base rssi 201
+Mote 2 at time 2019-06-17 20:49:12 base rssi 185
+Mote 1 at time 2019-06-17 20:49:12 saw 2 with rssi 192 base rssi 201
+Mote 2 at time 2019-06-17 20:49:13 base rssi 185
+Mote 1 at time 2019-06-17 20:49:13 saw 2 with rssi 192 base rssi 201
+Mote 2 at time 2019-06-17 20:49:14 saw 1 with rssi 193 base rssi 185
+Mote 1 at time 2019-06-17 20:49:14 saw 2 with rssi 192 base rssi 201
+Mote 2 at time 2019-06-17 20:49:15 saw 1 with rssi 193 base rssi 185
+Mote 1 at time 2019-06-17 20:49:15 base rssi 201
+Mote 2 at time 2019-06-17 20:49:16 base rssi 185
+Mote 1 at time 2019-06-17 20:49:16 saw 2 with rssi 192 base rssi 201
+Mote 2 at time 2019-06-17 20:49:17 base rssi 185
+---------------------------------
+three
+
+Mote 1 at time 2019-06-17 20:49:17 base rssi 201
+Mote 2 at time 2019-06-17 20:49:18 saw 1 with rssi 193 base rssi 185
+Mote 1 at time 2019-06-17 20:49:18 base rssi 201
+Mote 2 at time 2019-06-17 20:49:19 base rssi 185
+Mote 2 at time 2019-06-17 20:49:20 base rssi 185
+Mote 1 at time 2019-06-17 20:49:19 saw 2 with rssi 192 base rssi 202
+Mote 1 at time 2019-06-17 20:49:20 saw 2 with rssi 191 base rssi 201
+Mote 2 at time 2019-06-17 20:49:21 saw 1 with rssi 192 base rssi 183
+Mote 2 at time 2019-06-17 20:49:22 saw 1 with rssi 193 base rssi 183
+Mote 1 at time 2019-06-17 20:49:21 base rssi 202
+Mote 1 at time 2019-06-17 20:49:22 saw 2 with rssi 192 base rssi 201
+Mote 2 at time 2019-06-17 20:49:23 saw 1 with rssi 192 base rssi 184
+Mote 2 at time 2019-06-17 20:49:24 saw 1 with rssi 192 base rssi 186
+Mote 1 at time 2019-06-17 20:49:23 saw 2 with rssi 193 base rssi 202
+Mote 2 at time 2019-06-17 20:49:25 saw 1 with rssi 193 base rssi 182
+Mote 1 at time 2019-06-17 20:49:24 saw 2 with rssi 193 base rssi 202
+Mote 1 at time 2019-06-17 20:49:25 saw 2 with rssi 190 base rssi 201
+Mote 2 at time 2019-06-17 20:49:26 saw 1 with rssi 190 base rssi 179
+Mote 1 at time 2019-06-17 20:49:26 saw 2 with rssi 193 base rssi 201
+Mote 2 at time 2019-06-17 20:49:27 base rssi 176
+Mote 1 at time 2019-06-17 20:49:27 saw 2 with rssi 192 base rssi 201
+Mote 2 at time 2019-06-17 20:49:28 base rssi 182
+Mote 1 at time 2019-06-17 20:49:28 saw 2 with rssi 192 base rssi 204
+Mote 2 at time 2019-06-17 20:49:29 base rssi 179
+Mote 1 at time 2019-06-17 20:49:29 saw 2 with rssi 190 base rssi 203
+Mote 2 at time 2019-06-17 20:49:30 base rssi 169
+Mote 1 at time 2019-06-17 20:49:30 saw 2 with rssi 192 base rssi 201
+Mote 2 at time 2019-06-17 20:49:31 base rssi 179
+Mote 1 at time 2019-06-17 20:49:31 saw 2 with rssi 191 base rssi 202
+Mote 2 at time 2019-06-17 20:49:32 saw 1 with rssi 192 base rssi 176
+Mote 1 at time 2019-06-17 20:49:32 saw 2 with rssi 193 base rssi 200
+Mote 2 at time 2019-06-17 20:49:33 base rssi 179
+Mote 1 at time 2019-06-17 20:49:33 saw 2 with rssi 190 base rssi 176
+Mote 2 at time 2019-06-17 20:49:34 saw 1 with rssi 193 base rssi 185
+Mote 1 at time 2019-06-17 20:49:34 base rssi 183
+Mote 2 at time 2019-06-17 20:49:35 base rssi 183
+Mote 2 at time 2019-06-17 20:49:36 saw 1 with rssi 201 base rssi 176
+Mote 1 at time 2019-06-17 20:49:35 saw 2 with rssi 188 base rssi 188
+Mote 2 at time 2019-06-17 20:49:37 saw 1 with rssi 192 base rssi 176
+Mote 1 at time 2019-06-17 20:49:36 saw 2 with rssi 194 base rssi 185
+Mote 2 at time 2019-06-17 20:49:38 saw 1 with rssi 191 base rssi 174
+Mote 1 at time 2019-06-17 20:49:37 saw 2 with rssi 186 base rssi 182
+Mote 1 at time 2019-06-17 20:49:38 saw 2 with rssi 194 base rssi 177
+Mote 2 at time 2019-06-17 20:49:39 saw 1 with rssi 192 base rssi 179
+Mote 1 at time 2019-06-17 20:49:39 saw 2 with rssi 203 base rssi 171
+Mote 2 at time 2019-06-17 20:49:40 base rssi 184
+Mote 1 at time 2019-06-17 20:49:40 saw 2 with rssi 195 base rssi 177
+Mote 2 at time 2019-06-17 20:49:41 saw 1 with rssi 199 base rssi 188
+Mote 1 at time 2019-06-17 20:49:41 saw 2 with rssi 197 base rssi 176
+Mote 2 at time 2019-06-17 20:49:41 saw 1 with rssi 207 base rssi 185
+Mote 1 at time 2019-06-17 20:49:42 saw 2 with rssi 212 base rssi 174
+Mote 2 at time 2019-06-17 20:49:42 base rssi 178
+Mote 1 at time 2019-06-17 20:49:43 saw 2 with rssi 205 base rssi 169
+Mote 1 at time 2019-06-17 20:49:44 base rssi 171
+Mote 1 at time 2019-06-17 20:49:45 base rssi 165
+Mote 1 at time 2019-06-17 20:49:46 base rssi 161
+Mote 1 at time 2019-06-17 20:49:47 base rssi 161
+Mote 1 at time 2019-06-17 20:49:51 base rssi 180
+Mote 1 at time 2019-06-17 20:49:52 base rssi 182
+Mote 1 at time 2019-06-17 20:49:53 base rssi 187
+Mote 1 at time 2019-06-17 20:49:54 base rssi 186
+Mote 1 at time 2019-06-17 20:49:55 base rssi 187
+Mote 1 at time 2019-06-17 20:49:56 base rssi 186
+Mote 1 at time 2019-06-17 20:49:57 base rssi 188
+Mote 1 at time 2019-06-17 20:49:58 base rssi 187
+Mote 1 at time 2019-06-17 20:49:59 base rssi 182
+Mote 1 at time 2019-06-17 20:50:00 base rssi 183
+Mote 1 at time 2019-06-17 20:50:01 base rssi 181
+Mote 1 at time 2019-06-17 20:50:02 base rssi 185
+Mote 1 at time 2019-06-17 20:50:03 base rssi 185
+Mote 1 at time 2019-06-17 20:50:04 base rssi 185
+Mote 1 at time 2019-06-17 20:50:05 base rssi 183
+Mote 1 at time 2019-06-17 20:50:06 base rssi 184
+Mote 1 at time 2019-06-17 20:50:07 base rssi 183
+Mote 1 at time 2019-06-17 20:50:08 base rssi 183
+Mote 1 at time 2019-06-17 20:50:09 base rssi 183
+Mote 1 at time 2019-06-17 20:50:10 base rssi 186
+Mote 1 at time 2019-06-17 20:50:11 base rssi 184
+Mote 1 at time 2019-06-17 20:50:12 base rssi 186
+Mote 1 at time 2019-06-17 20:50:13 base rssi 186
+Mote 1 at time 2019-06-17 20:50:14 base rssi 185
+Mote 1 at time 2019-06-17 20:50:15 base rssi 186
+Mote 1 at time 2019-06-17 20:50:16 base rssi 185
+Mote 1 at time 2019-06-17 20:50:17 base rssi 185
+Mote 1 at time 2019-06-17 20:50:18 base rssi 185
+Mote 1 at time 2019-06-17 20:50:19 base rssi 186
+Mote 1 at time 2019-06-17 20:50:20 base rssi 186
+Mote 1 at time 2019-06-17 20:50:21 base rssi 185
+Mote 1 at time 2019-06-17 20:50:22 base rssi 185
+Mote 1 at time 2019-06-17 20:50:23 base rssi 186
+Mote 1 at time 2019-06-17 20:50:24 base rssi 186
+Mote 1 at time 2019-06-17 20:50:25 base rssi 187
+Mote 1 at time 2019-06-17 20:50:26 base rssi 187
+Mote 1 at time 2019-06-17 20:50:27 base rssi 186
+Mote 1 at time 2019-06-17 20:50:28 base rssi 186
+Mote 1 at time 2019-06-17 20:50:29 base rssi 187
+Mote 1 at time 2019-06-17 20:50:30 base rssi 187
+Mote 1 at time 2019-06-17 20:50:31 base rssi 187
+Mote 1 at time 2019-06-17 20:50:32 base rssi 187
+Mote 1 at time 2019-06-17 20:50:33 base rssi 186
+Mote 1 at time 2019-06-17 20:50:34 base rssi 186
+Mote 1 at time 2019-06-17 20:50:35 base rssi 186
+---------------------------------

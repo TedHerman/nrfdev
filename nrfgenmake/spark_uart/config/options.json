@@ -1,4 +1,4 @@
-{"nordicbase":"/home/herman/Desktop/nRF52840/Zigbee",
+{"nordicbase":"$NORDIC_BASE",
  "source":["uart.c","app_error_weak.c"],
  "excludes":["app_error_handler_iar.c",
              "app_timer_rtx.c",

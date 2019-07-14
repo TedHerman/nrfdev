@@ -46,8 +46,6 @@
 #define SCAN_INTERVAL 180 // scan interval in units of 0.625 millisecond
 #define SCAN_WINDOW 90    // scan window in units of 0.625 millisecond
 #define SCAN_TIMEOUT 0    // 0 means continuous 
-#define DATA_LENGTH_MAX 244   // empirically determined max char size
-#define MEMCHUNKS_POOL 720  // total memory is 720*244 
 
 #define CONN_INTERVAL_DEFAULT (uint16_t)(MSEC_TO_UNITS(7.5, UNIT_1_25_MS)) // at central side
 #define CONN_INTERVAL_MIN (uint16_t)(MSEC_TO_UNITS(7.5, UNIT_1_25_MS))  // in units of 1.25 ms. */
@@ -832,7 +830,7 @@ static void idle_state_handle(void) {
   }
 
 
-int main(void) {
+void xfer(void) {
     log_init();
     timers_init();
     buttons_leds_init();

@@ -15,20 +15,21 @@
 #include "nrf_sdh.h"
 #include "nrf_sdh_ble.h"
 #include "nrf_sdh_soc.h"
+#include "nrfx_wdt.h"
 #include "nrf_ble_scan.h"
 #include "nrf_ble_gatt.h"
 #include "nrf_ble_qwr.h"
 #include "nrf_pwr_mgmt.h"
 #include "nrf_fstorage.h"
-#include "mem_manager.h"
+#include "nrf_802154.h"
+#include "nrf_drv_clock.h"
+#include "motebadge.h"
 
 #include "nrf_log.h"
 #include "nrf_log_ctrl.h"
 #include "nrf_log_default_backends.h"
 
 #define MANUFACTURER_NAME "Signal Labs"
-#define APP_TIMER_OP_QUEUE_SIZE 3
-#define APP_TIMER_PRESCALER 0 
 #define BLE_UUID_OUR_BASE_UUID {0x23, 0xD1, 0x13, 0xEF, 0x5F, 0x78, 0x23, 0x15, 0xDE, 0xEF, 0x12, 0x12, 0x00, 0x00, 0x00, 0x00}
 #define BLE_UUID_OUR_SERVICE 0x152C
 #define CLOCK_READ_UUID 0x3907
@@ -37,17 +38,12 @@
 #define CLOCK_WRITE_INDX 1
 #define NUMBER_OUR_ATTRIBUTES 2
 
-#define SCHED_MAX_EVENT_DATA_SIZE APP_TIMER_SCHED_EVENT_DATA_SIZE
-#define SCHED_QUEUE_SIZE 10
-
 #define APP_BLE_CONN_CFG_TAG    1                                       
 #define APP_BLE_OBSERVER_PRIO   3
 #define APP_SOC_OBSERVER_PRIO   1
 #define SCAN_INTERVAL 180 // scan interval in units of 0.625 millisecond
 #define SCAN_WINDOW 90    // scan window in units of 0.625 millisecond
 #define SCAN_TIMEOUT 0    // 0 means continuous 
-#define DATA_LENGTH_MAX 244   // empirically determined max char size
-#define MEMCHUNKS_POOL 720  // total memory is 720*244 
 
 #define CONN_INTERVAL_DEFAULT (uint16_t)(MSEC_TO_UNITS(7.5, UNIT_1_25_MS)) // at central side
 #define CONN_INTERVAL_MIN (uint16_t)(MSEC_TO_UNITS(7.5, UNIT_1_25_MS))  // in units of 1.25 ms. */
@@ -89,22 +85,33 @@ struct bulkcli_s {
   bool notifyset;
   bool fullyconnected;
   bool busy;
-  bool hvxpending;
   };
 static bulkcli_t m_bulkcli;
 
 NRF_BLE_QWR_DEF(m_qwr); 
 NRF_BLE_SCAN_DEF(m_scan);
 NRF_BLE_GATT_DEF(m_gatt);
-APP_TIMER_DEF(timer_id);
-APP_TIMER_DEF(kickoff_id);
 
-uint8_t* p_memchunks[MEMCHUNKS_POOL];
-uint16_t memchunk_index;
+APP_TIMER_DEF(ble_scanwatch_id);  // to limit transfer attempt to 20 seconds or so
+APP_TIMER_DEF(kickoff_id);        // to start/repeat hvx activity
+APP_TIMER_DEF(progress_id);       // mainly for debugging 
 
 static char const m_target_periph_name[] = "Signal Labs";
 
-static bool  m_memory_access_in_progress;
+static bool m_memory_access_in_progress;
+static bool isDISset = false;
+uint8_t progressClock;
+
+extern bool xfer_active;
+extern void neopixel_write (uint8_t *pixels);
+extern void neopixel_init();
+extern uint8_t* mem_fetch();
+extern uint32_t mem_cursor();
+extern void mem_rewind();
+extern void mem_restore();
+extern void mem_undo();
+extern void main_xfer_end();
+void killscan(void * parameter, uint16_t size);
 
 // ref: http://infocenter.nordicsemi.com/index.jsp?topic=%2Fcom.nordic.infocenter.sdk5.v15.2.0%2Fgroup__nrf__ble__scan.html
 // found in components/softdevice/s140/headers/ble_gap.h
@@ -145,23 +152,6 @@ static uint32_t adv_report_parse(uint8_t type, ble_data_t * p_advdata, ble_data_
     }
 
 
-/**@brief Function for handling asserts in the SoftDevice.
- *
- * @details This function is called in case of an assert in the SoftDevice.
- *
- * @warning This handler is only an example and is not meant for the final product. You need to analyze
- *          how your product is supposed to react in case of assert.
- * @warning On assert from the SoftDevice, the system can only recover on reset.
- *
- * @param[in] line_num     Line number of the failing assert call.
- * @param[in] p_file_name  File name of the failing assert call.
- */
-void assert_nrf_callback(uint16_t line_num, const uint8_t * p_file_name)
-{
-    app_error_handler(0xDEADBEEF, line_num, p_file_name);
-}
-
-
 /**@brief Function for starting scanning. */
 static void scan_start(void) {
   ret_code_t ret;
@@ -182,6 +172,10 @@ static void scan_evt_handler(scan_evt_t const * p_scan_evt) {
   ble_gap_scan_params_t const * p_scan_param =
       p_scan_evt->p_scan_params;
   switch(p_scan_evt->scan_evt_id) {
+     case NRF_BLE_SCAN_EVT_SCAN_TIMEOUT: 
+       break;
+     case NRF_BLE_SCAN_EVT_NOT_FOUND: 
+       break;	
      case NRF_BLE_SCAN_EVT_FILTER_MATCH: {
        NRF_LOG_INFO("Device \"%s\" found, sending a connection request.",
             (uint32_t) m_target_periph_name);
@@ -195,7 +189,6 @@ static void scan_evt_handler(scan_evt_t const * p_scan_evt) {
           NRF_LOG_ERROR("sd_ble_gap_connect() failed: 0x%x.", err_code);
           }
        } break;
-
        default: break;
        }
   }
@@ -220,22 +213,20 @@ static void on_ble_gap_evt_connected(ble_gap_evt_t const * p_gap_evt) {
   if (m_bulkcli.conn_handle == BLE_CONN_HANDLE_INVALID) {
     NRF_LOG_INFO("on ble gap evt at time of connect");
     }
-
   m_bulkcli.conn_handle = p_gap_evt->conn_handle;
   nrf_ble_scan_stop();
+  NRF_LOG_INFO("scan stopped");
   err_code = nrf_ble_qwr_conn_handle_assign(&m_qwr,m_bulkcli.conn_handle);
   APP_ERROR_CHECK(err_code);
   }
 
 static void on_ble_gap_evt_disconnected(ble_gap_evt_t const * p_gap_evt) {
-  memchunk_index = 0;
+  NRF_LOG_INFO("disconnected event");
   m_bulkcli.conn_handle = BLE_CONN_HANDLE_INVALID;   
   m_bulkcli.notifyset = false;
   m_bulkcli.fullyconnected = false;
   m_bulkcli.busy = false;
-  m_bulkcli.hvxpending = false;
-  NRF_LOG_INFO("restart scanning");
-  scan_start();
+  killscan(NULL,0); 
   }
 
 static void scan_init(void) {
@@ -261,70 +252,52 @@ static void scan_init(void) {
     APP_ERROR_CHECK(err_code);
     }
 
-/*  This makes sense for a non-hvx kind of characteristic
-void blesetclock(void) {
-  ret_code_t err_code;
-  ble_gatts_value_t gatts_value;
-  memset(&gatts_value,0,sizeof(gatts_value));
-  gatts_value.len = sizeof(m_bulkcli.clock);
-  gatts_value.offset = 0;
-  // gatts_value.p_value = (uint8_t*)&m_bulkcli.clock;
-  gatts_value.p_value = p_memchunks[memchunk_index];
-  err_code = sd_ble_gatts_value_set(
-        m_bulkcli.conn_handle,
-        m_bulkcli.clock_handle.value_handle,
-        &gatts_value);
-  return;
-  APP_ERROR_CHECK(err_code);
-  }
-*/
-
-static void updateclock(void) {
+static void updateblock(void) {
   ret_code_t err_code;
   uint16_t len = DATA_LENGTH_MAX;
   ble_gatts_hvx_params_t hvx_params;
   if (m_bulkcli.conn_handle == BLE_CONN_HANDLE_INVALID) return;
   if (!m_bulkcli.notifyset) return;
-  if (memchunk_index>=MEMCHUNKS_POOL) return; 
   memset(&hvx_params, 0, sizeof(hvx_params));
   hvx_params.handle = m_bulkcli.clock_handle.value_handle;
   hvx_params.type = BLE_GATT_HVX_NOTIFICATION;
   hvx_params.offset = 0;
   hvx_params.p_len = &len;
-  hvx_params.p_data = p_memchunks[memchunk_index++];
-  err_code = sd_ble_gatts_hvx(m_bulkcli.conn_handle,&hvx_params);
-  if (err_code == NRF_SUCCESS || err_code == NRF_ERROR_RESOURCES) m_bulkcli.busy = true; 
+  hvx_params.p_data = mem_fetch();
+  if (hvx_params.p_data == NULL) {
+    on_ble_gap_evt_disconnected(NULL);
+    return;
+    }
+  // else
+  if (hvx_params.p_data != NULL) {
+    // NRF_LOG_RAW_HEXDUMP_INFO((uint8_t*)hvx_params.p_data,8)
+    // NRF_LOG_FLUSH();
+    err_code = sd_ble_gatts_hvx(m_bulkcli.conn_handle,&hvx_params);
+    if (err_code == NRF_ERROR_RESOURCES) {
+      m_bulkcli.busy = true; 
+      mem_undo();
+      NRF_LOG_INFO("gatts_hvx got resource error on block %d",
+		 mem_cursor());
+      }
+    else if (err_code != NRF_SUCCESS) APP_ERROR_CHECK(err_code);
+    }
   }
+
 void tryhvx(void * parameter, uint16_t size) {
-  if (m_bulkcli.hvxpending || m_bulkcli.busy) return;
-  updateclock();
+  if (m_bulkcli.busy) return;
+  updateblock();
   }
 
-static void timer_handler(void * p_context) {
-  UNUSED_PARAMETER(p_context);
-  }
-
-static void kickoff_handler(void * p_context) {
+// this will repeatedly attempt calling updateblock()
+void kickoff_handler(void * p_context) {
   if (m_bulkcli.fullyconnected) 
      app_sched_event_put(NULL,1,&tryhvx);
   }
 
-static void timers_init(void) {
-  ret_code_t err_code;
-  err_code = app_timer_init();
-  APP_ERROR_CHECK(err_code);
-  err_code = app_timer_create(&timer_id,
-                  APP_TIMER_MODE_REPEATED, timer_handler);
-  APP_ERROR_CHECK(err_code);
-  err_code = app_timer_create(&kickoff_id,
-                  // APP_TIMER_MODE_SINGLE_SHOT,
-                  APP_TIMER_MODE_REPEATED,
-                  kickoff_handler);
-  APP_ERROR_CHECK(err_code);
-  }
-static void timers_start(void) {
-  app_timer_start(timer_id,APP_TIMER_TICKS(1000),NULL);
-  app_timer_start(kickoff_id,APP_TIMER_TICKS(10),NULL);
+// this is just a debugging device every second
+void progress_handler(void * p_context) {
+  NRF_LOG_INFO("progress time %d cursor %d",
+     progressClock++,mem_cursor()); 
   }
 
 void debug(void * parameter, uint16_t size) {
@@ -368,19 +341,17 @@ static void on_ble_gatt_write(const ble_evt_t * p_ble_evt) {
 
 static void on_tx_complete(const ble_evt_t * p_ble_evt) {
   m_bulkcli.busy = false;
-  m_bulkcli.hvxpending = true;
-  updateclock();
   }
 
 static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context) {
     ret_code_t err_code;
     ble_gap_evt_t const * p_gap_evt = &p_ble_evt->evt.gap_evt;
 
-    // if (memchunk_index>=MEMCHUNKS_POOL) return; 
 
     switch (p_ble_evt->header.evt_id) {
 
         case BLE_GAP_EVT_CONNECTED:
+            NRF_LOG_INFO("BLE_GAP_EVT_CONNECTED"); 
             err_code = sd_ble_gap_phy_update(p_gap_evt->conn_handle,&m_test_params.phys);
 	    APP_ERROR_CHECK(err_code);
             break;
@@ -393,6 +364,7 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context) {
             break;
 
         case BLE_GAP_EVT_TIMEOUT:
+            NRF_LOG_INFO("BLE_GAP_EVT_TIMEOUT"); 
             if (p_gap_evt->params.timeout.src == BLE_GAP_TIMEOUT_SRC_CONN) {
                NRF_LOG_INFO("Connection Request timed out.");
                }
@@ -400,6 +372,7 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context) {
 
         case BLE_GAP_EVT_SEC_PARAMS_REQUEST:
             // Pairing not supported.
+            NRF_LOG_INFO("BLE_GAP_EVT_SEC_PARAMS_REQUEST"); 
             err_code = sd_ble_gap_sec_params_reply(p_ble_evt->evt.gap_evt.conn_handle, BLE_GAP_SEC_STATUS_PAIRING_NOT_SUPP, NULL, NULL);
             APP_ERROR_CHECK(err_code);
             break;
@@ -437,6 +410,7 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context) {
 	    } break;
 
 	case BLE_GAP_EVT_PHY_UPDATE_REQUEST: {
+            NRF_LOG_INFO("BLE_GAP_EVT_PHY_UPDATE_REQUEST"); 
             err_code = sd_ble_gap_phy_update(p_gap_evt->conn_handle, &m_test_params.phys);
             APP_ERROR_CHECK(err_code);
             } break;
@@ -470,11 +444,11 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context) {
 	    ble_data_t inspectServ;
 	    uint8_t expectServ[] = {0x0A, 0x18};
             err_code = adv_report_parse(9,&m_scan.scan_buffer,&inspectName);
-	    if (err_code == NRF_SUCCESS) 
-	       NRF_LOG_RAW_HEXDUMP_INFO (inspectName.p_data, inspectName.len)
+	    if (err_code == NRF_SUCCESS)  { }; 
+	       // NRF_LOG_RAW_HEXDUMP_INFO (inspectName.p_data, inspectName.len)
             err_code = adv_report_parse(3,&m_scan.scan_buffer,&inspectServ);
-	    if (err_code == NRF_SUCCESS) 
-	       NRF_LOG_RAW_HEXDUMP_INFO (inspectServ.p_data, inspectServ.len)
+	    if (err_code == NRF_SUCCESS) { }; 
+	       // NRF_LOG_RAW_HEXDUMP_INFO (inspectServ.p_data, inspectServ.len)
 	    err_code = adv_report_parse(9,&m_scan.scan_buffer,&inspectName);
 	    err_code = err_code + adv_report_parse(3,&m_scan.scan_buffer,&inspectServ);
 	    if (  err_code == NRF_SUCCESS 
@@ -495,10 +469,12 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context) {
 
 	// client gets write (to CCCD) from server
 	case BLE_GATTS_EVT_WRITE:
+            NRF_LOG_DEBUG("BLE_GATTS_EVT_WRITE");
             on_ble_gatt_write(p_ble_evt);
             break;
 
 	case BLE_GATTS_EVT_HVN_TX_COMPLETE:
+            NRF_LOG_DEBUG("BLE_GATTS_EVT_HVN_TX_COMPLETE");
             on_tx_complete(p_ble_evt);
             break;
 	 
@@ -564,7 +540,7 @@ static void local_clock_add() {
   attr_char_value.init_len     = DATA_LENGTH_MAX;
   attr_char_value.init_offs    = 0;
   attr_char_value.max_len      = DATA_LENGTH_MAX;
-  attr_char_value.p_value      = p_memchunks[0];
+  // attr_char_value.p_value      = p_memchunks[0];
 
   ble_uuid.type = m_bulkcli.uuid_type;
   ble_uuid.uuid = CLOCK_READ_UUID;
@@ -626,6 +602,7 @@ static void local_setclock_add() {
 static void local_dis_add() {
   ret_code_t err_code;
   ble_dis_init_t dis_init;
+  if (isDISset) return; 
   memset(&dis_init, 0, sizeof(dis_init));
   ble_srv_ascii_to_utf8(&dis_init.manufact_name_str, (char *)MANUFACTURER_NAME);
   dis_init.dis_char_rd_sec = SEC_OPEN;
@@ -635,6 +612,7 @@ static void local_dis_add() {
   APP_ERROR_CHECK(err_code);
   err_code = ble_dis_init(&dis_init);
   APP_ERROR_CHECK(err_code);
+  isDISset = true;
   }
 
 static void local_service_add() {
@@ -643,7 +621,7 @@ static void local_service_add() {
   ble_uuid128_t base_uuid = {BLE_UUID_OUR_BASE_UUID};
 
   memset(&m_bulkcli,0,sizeof(m_bulkcli));
-  memchunk_index = 0;
+  // memchunk_index = 0;
   m_bulkcli.conn_handle = BLE_CONN_HANDLE_INVALID;   
 
   err_code = sd_ble_uuid_vs_add(&base_uuid, &m_bulkcli.uuid_type);
@@ -663,38 +641,11 @@ static void bulkcli_init(void) {
   local_setclock_add();
   }
 
-static void mem_init() {
-  char s = 'a';
-  nrf_mem_init();
-  for (int i=0; i<MEMCHUNKS_POOL; i++) {  // there are 3 pools of 255 x 256 
-     p_memchunks[i] = nrf_malloc(DATA_LENGTH_MAX);
-     if (p_memchunks[i]==NULL) {
-        bsp_board_led_on(3);
-	while (true) { }
-        }
-     }
-  for (int i=0; i<MEMCHUNKS_POOL; i++) {
-    if (p_memchunks[i] == NULL) { while (true) { } }
-    for (int j=0; j<DATA_LENGTH_MAX; j++) {
-       uint8_t * p_place = p_memchunks[i];
-       p_place[j] = s++;
-       if (s > 'z') s = 'a';
-       }  
-    }
-  }
-
-static void softdevice_init() {
-  ret_code_t err_code;
-  err_code = nrf_sdh_enable_request();
-  APP_ERROR_CHECK(err_code);
-  }
-
 static void ble_stack_init(void)
 {
     ret_code_t err_code;
 
     // Configure the BLE stack using the default settings.
-    // Fetch the start address of the application RAM.
     uint32_t ram_start = 0;
     err_code = nrf_sdh_ble_default_cfg_set(APP_BLE_CONN_CFG_TAG, &ram_start);
     APP_ERROR_CHECK(err_code);
@@ -800,50 +751,77 @@ void bsp_event_handler(bsp_event_t event) {
     }
 }
 
-/**@brief Function for initializing buttons and leds. */
-static void buttons_leds_init(void)
-{
+// handler called to prematurely terminate BLE Scan and stop xfer 
+void killscan(void * parameter, uint16_t size) {
     ret_code_t err_code;
-    bsp_event_t startup_event;
-
-    err_code = bsp_init(BSP_INIT_LEDS, bsp_event_handler);
+    uint8_t rgb[3] = {0x00,0x00,0x00};
+    nrf_ble_scan_stop();
+    err_code = nrf_sdh_disable_request();
     APP_ERROR_CHECK(err_code);
-
-    err_code = bsp_btn_ble_init(NULL, &startup_event);
-    APP_ERROR_CHECK(err_code);
-}
-
-static void log_init(void) {
-  ret_code_t err_code = NRF_LOG_INIT(NULL);
-  APP_ERROR_CHECK(err_code);
-  NRF_LOG_DEFAULT_BACKENDS_INIT();
-  }
-
-static void power_management_init(void) {
-  ret_code_t err_code;
-  err_code = nrf_pwr_mgmt_init();
-  APP_ERROR_CHECK(err_code);
-  }
-
-static void idle_state_handle(void) {
-  if (NRF_LOG_PROCESS() == false) {
-    nrf_pwr_mgmt_run();
+    neopixel_write(rgb);
+    xfer_active = false;
+    mem_restore();
+    main_xfer_end();
     }
-  }
+void ble_scanwatch_handler(void * p_context) {
+    app_sched_event_put(NULL,1,&killscan);
+    }
 
+void xfer(void) {
+    ret_code_t err_code;
+    uint8_t rgb[3] = {0x11,0x00,0x11};
 
-int main(void) {
-    log_init();
-    timers_init();
-    buttons_leds_init();
-    APP_SCHED_INIT(SCHED_MAX_EVENT_DATA_SIZE, SCHED_QUEUE_SIZE);
-    power_management_init();
-    softdevice_init();
+    // shut down 802.15.4 and softdevice
+    nrf_802154_deinit();
+    err_code = nrf_sdh_disable_request();
+    APP_ERROR_CHECK(err_code);
+    nrf_clock_event_clear(NRF_CLOCK_EVENT_HFCLKSTARTED);
+    nrf_drv_clock_init();
+
+    // show user this section of code running
+    neopixel_init();
+    neopixel_write(rgb);
+    mem_rewind();  // prepare to transfer data
+
+    // at this point, only wdt is active and we
+    // have several minutes (see RELOAD constant)
+    // to scan and transfer, but using a timer 
+    // all can be completed here
+    err_code = nrf_sdh_enable_request();
+    APP_ERROR_CHECK(err_code);
+    nrfx_wdt_feed();
+
+    // BLE Scan watch
+    err_code = app_timer_create(&ble_scanwatch_id,
+                                APP_TIMER_MODE_SINGLE_SHOT,
+                                ble_scanwatch_handler);
+    APP_ERROR_CHECK(err_code);
+    err_code = app_timer_start(ble_scanwatch_id,
+               APP_TIMER_TICKS(20000), NULL);
+    APP_ERROR_CHECK(err_code);
+
+    // Kickoff timer for HVX transfer
+    err_code = app_timer_create(&kickoff_id,
+                                APP_TIMER_MODE_REPEATED,
+                                kickoff_handler);
+    APP_ERROR_CHECK(err_code);
+    err_code = app_timer_start(kickoff_id,
+               APP_TIMER_TICKS(10), NULL);
+    APP_ERROR_CHECK(err_code);
+
+    // Debugging Progress timer
+    progressClock = 0;
+    err_code = app_timer_create(&progress_id,
+                                APP_TIMER_MODE_REPEATED,
+                                progress_handler);
+    APP_ERROR_CHECK(err_code);
+    err_code = app_timer_start(progress_id,
+               APP_TIMER_TICKS(1000), NULL);
+    APP_ERROR_CHECK(err_code);
+
     ble_stack_init();
     gatt_init();
     bulkcli_init();
-    mem_init();
-    timers_start();
     scan_init();
 
     gatt_mtu_set(m_test_params.att_mtu);
@@ -851,10 +829,4 @@ int main(void) {
     data_len_set(DATA_LENGTH_MAX);
 
     scan_start();
-
-    for (;;) {
-      bsp_board_led_invert(1);
-      idle_state_handle();
-      app_sched_execute();
-      }
-   }
+    }

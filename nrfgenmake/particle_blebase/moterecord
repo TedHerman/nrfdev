@@ -1,0 +1,229 @@
+#!/usr/bin/env python3
+
+import serial, sys, os, subprocess
+import time, datetime, random
+
+def findevice():
+  alldev = os.listdir("/dev")
+  usbdev = [ n for n in alldev if n.startswith("tty.usb") or n.startswith("ttyUSB") or n.startswith("ttyACM") ]
+  if len(usbdev) < 1: 
+     sys.stderr.write("cannot find usb mote device\n")
+     sys.exit(1)
+  if len(usbdev) > 1: 
+     sys.stderr.write("found too many usb mote devices\n")
+     sys.exit(1)
+  return "/dev/{0}".format(usbdev[0])
+
+S = serial.Serial(baudrate=115200,
+        port=findevice(),
+        write_timeout=0.1,
+        timeout=0.1) 
+
+F = open("recordall.dat",'ab')
+
+def gethdlc():
+  # initially scan for start of frame:
+  while True:
+    b = S.read(1)
+    if len(b) < 1: return (False,None)
+    if b == b"\x7E": break
+  # we have just read a 0x7E
+  payload = list()
+  b = S.read(1) # check for special case
+  if len(b) < 1: return (True,None) 
+  if b == b"\x7e": # empty frame means we got fooled
+     b = S.read(1) # now *this* should be the real start
+     if len(b) < 1: return (True,None) 
+     if b != b"\x7e": return (True,None)
+  # b is the first character of the frame  
+  # now after start of frame, scan for end of frame
+  while True:
+      if b == b"\x7d": # special character check
+        b = S.read(1)
+        if len(b) < 1: return (True,None) 
+        if b not in (b"\x5e",b"\x5d"): return (True,None) 
+        if b == b"\x5e": b = b"\x7e"
+        elif b == b"\x5d": b = b"\x7d"
+        payload.append(ord(b))
+        b = S.read(1)
+        if len(b) < 1: return (True,None) 
+        continue
+      if b == b"\x7e":
+        if len(payload) == 0: return (True,None) 
+        return (True,payload)
+      payload.append(ord(b))
+      b = S.read(1)
+      if len(b) < 1: return (True,None) 
+      continue
+
+def storepacket(T,D): 
+  if len(T) != 244: return
+  recordnum = T[0]+256*T[1] # small/big endian conversion 
+  #print("storing {0} overwrite = {1} starts {2}".format(
+  #    recordnum, recordnum in D, T[:8]))
+  # if recordnum in D: return  # do not accept duplicates
+  D[recordnum] = T  
+
+def dump(D):
+  for rec in sorted(D.keys()):
+    F.write(bytes(D[rec]))
+    F.write(bytes(4))  # extra 12 bytes (244 + 12 = 256) demarcates
+    F.write(b"\x55\x55\x55\x55")
+    F.write(bytes(4))
+
+def hdlcEncode(W): # W is a bytes type
+    R = [0x7e]
+    for v in W:
+      if v == 0x7e: R += [0x7d,0x5e]
+      elif v == 0x7d: R += [0x7d,0x5d]
+      else: R.append(v) 
+    R.append(0x7e) 
+    return bytes(R)
+
+def timeout():
+    sys.stderr.write("Timeout - unable to sync up with gateway device\n")
+    sys.stderr.write("(maybe try again later after attach/reattach and wait)\n")
+    sys.exit(1)
+
+def sendcommand(cmd):
+  n = 0
+  # print("sending command ",cmd)
+  while (n != 3):
+    time.sleep(0.1)
+    try:
+      S.write(cmd); S.flush();
+      break
+    except serial.SerialTimeoutException:
+      pass
+    n += 1
+  if n == 3: timeout()
+
+def getallblocks(D):
+  req = hdlcEncode(b"<<<")
+  sendcommand(req)
+  gotany,T = gethdlc()
+  # print("rewind response",gotany,T)
+  req = hdlcEncode(b">>>")
+  sendcommand(req)
+  totalsize, blocks = 0, list()
+  while True:
+    time.sleep(0.001)
+    gotany,T = gethdlc()
+    if not gotany or T == None:
+       sys.stdout.write("bulk download got {0} bytes\n".format(totalsize))
+       return blocks
+    blocks.append(T)
+    totalsize += len(T)
+
+def getblock(reqnum,D):
+  if reqnum >= 0:
+     req = hdlcEncode(b"?" + bytes([reqnum%256,reqnum//256]))  
+  trylimit = 0
+  n = 0
+  sendcommand(req)
+  gotany,T = gethdlc()
+  if not gotany or T == None: return False
+  if len(T) != 244: return False 
+  # if reqnum != T[0]+256*T[1]: return False
+  # if reqnum != T[0]+256*T[1]: print("->",reqnum,"vs",T[0]+256*T[1])
+  #print("got block {0}".format(T[:2]))
+  storepacket(T,D)
+  return True
+
+def syncup():
+    synctime = time.time()
+    b = S.read(8)
+    while True:
+      time.sleep(0.5)
+      elapsed = time.time() - synctime
+      if elapsed > 2: timeout()
+      b = b"~" + hdlcEncode(b"KOK")
+      # print("writing to S",b)
+      try: 
+        S.write(b) 
+        S.flush()
+      except serial.SerialTimeoutException:
+        print("write timeout")
+        time.sleep(1)
+        continue
+      a,b = gethdlc()
+      if not a: continue
+      if not b: continue
+      if b == list(map(ord,"KOK")): break
+    print("Python synchronized to device")
+    return
+
+def session():
+  D = dict()
+  print("sleep for 20")
+  time.sleep(20)
+  '''
+  for i in range(720):
+    gotany = getblock(i,D)
+    time.sleep(0.1)
+  '''
+  getallblocks()
+  return D
+  print("** try for missing **")
+  getmissing(D)
+  return D
+
+def rewind():
+  sendcommand(hdlcEncode(b"<<<"))
+  worked,T = gethdlc()
+
+def reset():
+  sendcommand(hdlcEncode(b"***"))
+  worked,T = gethdlc()
+
+def run():
+  D = dict()
+  while True:
+    sys.stdout.write("\rwaiting for badge to transfer data ...")
+    sys.stdout.flush()
+    localD = dict()
+    getblock(0,localD)
+    if len(localD) == 0:
+       time.sleep(0.5)
+       continue
+    elif 0 in localD and len(localD[0]) == 244 and localD[0][2:5] != [0,0,0]:
+       # print(localD[0])
+       sys.stdout.write("\nwaiting for transfer to complete ...")
+       sys.stdout.flush()
+       time.sleep(8) # hopefully enough time
+       break
+    # print(localD)
+    continue
+
+  start_download_time = time.time()
+  sys.stdout.write("\ninitiating download ...")
+  sys.stdout.flush()
+  # rewind()
+  # last = True
+  R = getallblocks(D)
+  for T in R:
+    if len(T) == 244 and (T[0]+256*T[1]) in range(720):
+       D[T[0]+256*T[1]] = T 
+  for i in range(720):
+    if i in D: continue
+    sys.stdout.write("\rmissing block {0} fetch".format(i))
+    while True:
+      if i in D: break
+      if i not in D: getblock(i,D)
+  dump(D)
+  elapsed = time.time() - start_download_time
+  sys.stdout.write("\ndownload completed in {0} seconds\n".format(int(elapsed)))
+  reset()
+
+'''
+
+        dump(D)
+        sys.stdout.write("Downloaded {0} blocks and saved to file\n".format(len(D)))
+        D = dict()
+        _ = S.read(1024)
+        time.sleep(1.0)
+        writeprompt()
+'''
+
+syncup()
+run()

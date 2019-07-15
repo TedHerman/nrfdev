@@ -46,6 +46,7 @@ CFLAGS += -fno-builtin -fshort-enums
 # flags specific to 802.15.4
 CFLAGS += -DRAAL_SINGLE_PHY=1
 CFLAGS += -DNRF_CLOCK_ENABLED
+CFLAGS += -DNO_802154_HACK
 CFLAGS += -Dnrf52840_tx
 
 # C++ flags common to all targets

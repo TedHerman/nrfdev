@@ -31,9 +31,7 @@
 #include "motebadge.h"
 
 #define CHANNEL 26 // for 802.15.4 radio 
-// #define WATCHDOG_RELOAD 300000 // 5 minutes for watchdog to expire 
-#define WATCHDOG_RELOAD 7200000 // 120 minutes for watchdog to expire 
-#define BEACON_PERIOD 8000 // 8 seconds between beacon scans
+#define BEACON_PERIOD 80 
 
 #define APP_BLE_CONN_CFG_TAG 1 // identifying the SoftDevice BLE configuration
 #define APP_BLE_OBSERVER_PRIO 3 
@@ -46,19 +44,11 @@
 #define BUTTON_DEBOUNCE_DELAY   50 // Delay from a GPIOTE event until a button is reported as pushed.
 #define APP_GPIOTE_MAX_USERS    1  // Maximum number of users of the GPIOTE handler.
 
-extern int16_t find_mac_addr(ble_gap_addr_t ble_addr);
-extern void pool_init();
-extern void pool_insert(mote_received_t* p);
-extern void mem_init();
-extern void mem_batch(uint32_t clock, mote_report_t * r);
-extern void mem_restore();
-extern void xfer();
 uint32_t random_write_delay(uint32_t bound);
 static void mote_timeout_handler(void * p_context);
 void timers_start(void);
 void moterestart(void); 
 void motesetup(void);
-void launch_xfer(void * parameter, uint16_t size);  
 
 /****** Timers *********************************************************/
 APP_TIMER_DEF(clock_id);       // 1 sec tick / atomic increment of clock
@@ -86,6 +76,13 @@ motepacket_t * p = (motepacket_t *)&buffer;
 const uint8_t extended_address[] = {0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef};
 const uint8_t short_address[]    = {0x06, 0x07};
 const uint8_t pan_id[]           = {0x04, 0x05};
+
+// colors for blinks
+uint16_t colorCount;
+uint8_t rgb0[3] = {0x11,0x00,0x11};
+uint8_t rgb1[3] = {0x11,0x11,0x00};
+uint8_t rgb2[3] = {0x00,0x11,0x11};
+uint8_t rgb3[3] = {0x00,0x33,0x00};
 
 // trap for assert failures
 void assert_nrf_callback(uint16_t line_num, const uint8_t * p_file_name) {
@@ -131,7 +128,6 @@ void report_init(mote_report_t * input) {
 
 void ble_stack_init(void) {
     ret_code_t err_code;
-    int16_t moteaddr;
     ble_gap_addr_t ble_addr;
     err_code = nrf_sdh_enable_request();
     APP_ERROR_CHECK(err_code);
@@ -148,14 +144,7 @@ void ble_stack_init(void) {
 
     // read the device MAC address
     sd_ble_gap_addr_get(&ble_addr);
-    moteaddr = find_mac_addr(ble_addr);
-    local_mote_id = moteaddr;
-    if (moteaddr < 0) {
-       NRF_LOG_INFO("mac address, not in table, is");
-       NRF_LOG_HEXDUMP_INFO((uint8_t*)&ble_addr.addr,BLE_GAP_ADDR_LEN);
-       NRF_LOG_FLUSH();
-       APP_ERROR_CHECK(moteaddr);
-       }
+    local_mote_id = 5;
     }
 
 void nrf_802154_received_timestamp_raw(uint8_t * p_data, int8_t power, uint8_t lqi, uint32_t time) {
@@ -172,7 +161,6 @@ void nrf_802154_received_timestamp_raw(uint8_t * p_data, int8_t power, uint8_t l
        mote_report_t * s =  (mote_report_t *)q->data;
        observation.mote_id = s->mote_id;
        observation.rssi = power;
-       pool_insert(&observation);
        nrf_802154_buffer_free_raw(p_data);
        nrfx_wdt_feed();
        // bsp_board_led_invert(1);
@@ -224,33 +212,29 @@ void motesetup() {
     nrf_802154_receive();
     }
 
-
 // handler called regularly in each beacon period to produce consolidate
 // report of observations, recording in long-term storage
 static void mote_timeout_handler(void * p_context) {
     ret_code_t err_code;
     if (xfer_active) return;
-    mem_batch(clock,&consolidated);  // sets up payload 
     report_init(&consolidated);  
     err_code = app_timer_start(transmit_timer_id,
-               APP_TIMER_TICKS(random_write_delay(8000)), NULL);
+               APP_TIMER_TICKS(random_write_delay(10)), NULL);
     APP_ERROR_CHECK(err_code);
-    }
-
-// called by xfer to terminate xfer_active status
-void main_xfer_end() {
-    // sure, could use NVIC_SystemReset() with simpler / safer 
-    // code, but then mem_init() will get called and wipe out data
-    xfer_active = false;
-    app_timer_stop_all();  // just in case, kill all timers
-    mem_restore();         // put cursor back to where it was
-    moterestart();         // will set is802154running to true
-    timers_start();        // with all stopped, ok to start normally
     }
 
 void nrf_802154_transmitted_raw(const uint8_t *p_frame,
                 uint8_t *p_ack, int8_t power, uint8_t lqi) {
     nrf_802154_receive();
+    nrf_gpio_cfg_output(LED_PRIMARY_PIN);
+    nrf_gpio_cfg_output(LED_RGB_RED_PIN);
+    nrf_gpio_cfg_output(LED_RGB_GREEN_PIN);
+    nrf_gpio_cfg_output(LED_RGB_BLUE_PIN);
+    if (colorCount % 4 == 0) nrf_gpio_pin_toggle(LED_PRIMARY_PIN);
+    if (colorCount % 4 == 1) nrf_gpio_pin_toggle(LED_RGB_RED_PIN);
+    if (colorCount % 4 == 2) nrf_gpio_pin_toggle(LED_RGB_GREEN_PIN);
+    if (colorCount % 4 == 3) nrf_gpio_pin_toggle(LED_RGB_BLUE_PIN);
+    colorCount++;
     }
 void nrf_802154_transmit_failed (const uint8_t *p_frame, nrf_802154_tx_error_t error) {
     nrf_802154_receive();
@@ -262,26 +246,6 @@ void mote_transmit(void * parameter, uint16_t size) {
     }
 static void transmit_timeout_handler(void * p_context) {
     app_sched_event_put(NULL,1,&mote_transmit);
-    }
-
-void button_handler(uint8_t pin_no, uint8_t button_action) {
-    if (xfer_active) return;
-    if (button_action == APP_BUTTON_PUSH && pin_no == BUTTON_1) {
-	xfer_active = true;
-        app_sched_event_put(NULL,1,&launch_xfer);
-        }
-    }
-
-void buttons_init(void) {
-    ret_code_t err_code;
-    xfer_active = false;
-    static app_button_cfg_t p_button[] = {  
-       {BUTTON_1, APP_BUTTON_ACTIVE_LOW, NRF_GPIO_PIN_PULLUP, button_handler} };
-    APP_GPIOTE_INIT(APP_GPIOTE_MAX_USERS);
-    err_code = app_button_init(p_button, sizeof(p_button) / sizeof(p_button[0]), BUTTON_DEBOUNCE_DELAY);
-    APP_ERROR_CHECK(err_code);
-    err_code = app_button_enable();
-    APP_ERROR_CHECK(err_code);
     }
 
 void board_init(void) {
@@ -343,53 +307,12 @@ void timers_start(void) {
     }
 
 uint32_t random_write_delay(uint32_t bound) {
-    ret_code_t err_code;
-    uint8_t num_rand_avail;
-    uint32_t R;
-    uint8_t * p = (uint8_t*)&randvalue;
-    randvalue = 1 + (bound/2);  // poor, but default 
-    err_code = sd_rand_application_bytes_available_get(&num_rand_avail);
-    APP_ERROR_CHECK(err_code);
-    if (num_rand_avail >= 4) {
-       err_code = sd_rand_application_vector_get(p,4);
-       APP_ERROR_CHECK(err_code);
-       }
-    R = randvalue % 32647;  // way too big, but a good start
-    R = R % (bound - 500);  // force some millsec away from 
-    if (R < 100) R = 100;   // boundary of the bound either way
-    return R;
+    return 10;
     }
-
-void watchdog_handler(void) { };
-void watchdog_init(void) {
-    // see config/sdk_config.h for NRF_WDT_etc values 
-    ret_code_t err_code;
-    nrfx_wdt_channel_id m_channel = 0;
-    nrfx_wdt_config_t config = {
-      .behaviour          = (nrf_wdt_behaviour_t)NRFX_WDT_CONFIG_BEHAVIOUR, 
-      .reload_value       = WATCHDOG_RELOAD, 
-      NRFX_WDT_IRQ_CONFIG };
-    err_code = nrfx_wdt_init(&config,watchdog_handler);
-    APP_ERROR_CHECK(err_code);
-    err_code = nrfx_wdt_channel_alloc(&m_channel);
-    APP_ERROR_CHECK(err_code);
-    nrfx_wdt_enable();
-    }
-
-// major phase switch: 802.15.4 to BLE transfer, which 
-// should complete within 60 seconds or be abandoned
-void launch_xfer(void * parameter, uint16_t size) {
-    NRF_LOG_INFO("launching xfer");
-    app_timer_stop_all();    // don't let rejuvenation interfere
-    is802154running = false;
-    xfer(); 
-    }	
 
 int main(void) {
     log_init();
     board_init();
-    pool_init();
-    mem_init(); 
     power_management_init();
     APP_SCHED_INIT(SCHED_MAX_EVENT_DATA_SIZE, SCHED_QUEUE_SIZE);
     NRF_LOG_INFO("Initialization starts ...");
@@ -397,9 +320,7 @@ int main(void) {
     motesetup();
     report_init(NULL);   // first-time empty report 
     timers_init();
-    buttons_init();
     timers_start();
-    watchdog_init();
 
     // Enter main loop.
     for (;;) {

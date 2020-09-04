@@ -18,6 +18,7 @@
 #include "fds.h"
 #include "nrf_fstorage.h"
 #include "ble_conn_state.h"
+#include "nrfx_wdt.h"
 #include "nrf_sdh.h"
 #include "nrf_sdh_ble.h"
 #include "nrf_sdh_soc.h"
@@ -30,6 +31,7 @@
 #include "nrf_log_ctrl.h"
 #include "nrf_log_default_backends.h"
 
+#include "boron.h"
 
 #define MANUFACTURER_NAME "Signal Labs"
 #define APP_TIMER_OP_QUEUE_SIZE 3
@@ -113,6 +115,16 @@ static test_params_t m_test_params = {
   BLE_GATT_EXEC_WRITE_FLAG_PREPARED_CANCEL,BLE_GATT_EXEC_WRITE_FLAG_PREPARED_WRITE  
  */
 
+// variable for struct of reading
+bps_reading_t bps_reading = {
+  .fence = {0x55,0xaa,0xff,0x77},
+  .status = {0,0,0,0},  
+  .clock = 0,
+  .systolic = 0,
+  .diastolic = 0,
+  .pulse = 0,
+  };
+
 /*******************************************************************
  * application main data structure, initially should be zeroed out 
  */ 
@@ -159,9 +171,13 @@ struct balapp_s {
   uint8_t buffer[64];  // general purpose read/write buffer
   // this is for control flow: the state of an abstract FSM
   uint8_t phase;       // State in FSM of Control Flow
-  bool reboot_scheduled;
+  bool reboot_scheduled;   // force reboot in idle loop
+  bool pending_transfer;   // there are readings to transfer
+  bool connected;          // true if known to be connected
   ble_gattc_write_params_t writeparm;
   uint8_t num_readings; 
+  uint8_t cursor_readings;  
+  uint8_t boron_retries;   // only retry a few times ($$$ for bandwidth bugs!!)
   readings_t readings[16]; // up to 16 readings
   uint32_t latest_reading; // timestamp of most recent HVX transfer
   };
@@ -183,6 +199,8 @@ BLE_DB_DISCOVERY_DEF(m_db_disc); // Primary Service Discovery
 APP_TIMER_DEF(timer_id);
 APP_TIMER_DEF(kickoff_id);
 APP_TIMER_DEF(milli_id);
+nrfx_wdt_channel_id wdtchan = 1;
+nrfx_wdt_config_t wdtconfig = NRFX_WDT_DEAFULT_CONFIG; 
 
 // not really used for a scan parameter, but needed to connect
 static const ble_gap_scan_params_t m_scan_param = {
@@ -202,6 +220,9 @@ static ble_gap_conn_params_t m_conn_param = {
   .conn_sup_timeout  = CONN_SUP_TIMEOUT  
   };
 
+void i2c_init(); 
+extern boronstate_t * boronapi_read();
+extern bool boronapi_write(bps_reading_t * p); 
 extern void clockapi_init();
 extern uint32_t get_clock();
 extern void message_clock_set(void * parameter, uint16_t size);
@@ -335,21 +356,76 @@ void FSM(uint8_t newphase) {
       schedFSM(26);
       break;
     case 26:
-      show_readings();
-      m_balapp.reboot_scheduled = true;
+      // show_readings();
+      // m_balapp.reboot_scheduled = true;
       break;
     case 30: 
       // NRF_LOG_INFO("try to read 2a26");
       read_char(m_balapp.serv2a26.value_handle); 
       break;
+    case 100:  // process first/next reading for transfer
+      if (m_balapp.num_readings == 0 || 
+          m_balapp.cursor_readings >= m_balapp.num_readings) {
+	 m_balapp.reboot_scheduled = true;
+	 break;
+	 }
+      // attempt to read boron state, to validate it is awake and ready
+      boronapi_read(); // the callback will trigger retry or transition
+      break;
+    case 101: { // try to transfer one reading to boron
+      readings_t * p = &m_balapp.readings[m_balapp.cursor_readings]; 
+      bps_reading.systolic = p->sys;
+      bps_reading.diastolic = p->dia;
+      bps_reading.pulse = p->pul;
+      bps_reading.clock = p->time + 1262304000U;
+      memset(bps_reading.status,0,sizeof(bps_reading.status));
+      NRF_LOG_INFO("writing bps reading to boron");
+      boronapi_write(&bps_reading);
+      break;
+      }
+    case 102: 
     default:
       break;
     }
-    m_balapp.phase = newphase; 
+    m_balapp.phase = newphase; // other uses are limited, please search them out 
   }
-
-// Get Unix Time (currently not implemented, would need DS3231 or equiv)
-
+void boronapi_write_done( bool worked ) {
+  if (worked) {
+    m_balapp.cursor_readings++;
+    FSM(100);
+    return;
+    }	  
+  else {
+    NRF_LOG_INFO("making boron retry");
+    NRF_LOG_FLUSH();
+    m_balapp.boron_retries++;
+    if (m_balapp.boron_retries > 2) {
+      // just give up, abandon all ..
+      m_balapp.reboot_scheduled = true;
+      delayFSM(100);
+      return;
+      }
+    delayFSM(101);  // retry
+    }
+  }	
+void boronapi_read_done( boronstate_t * p ) {
+  if (!m_balapp.pending_transfer) {
+    // here will be reaction to ordinary boron status query
+    return;
+    }
+  // case when pending transfer
+  if (p == NULL) { // failure to contact boron
+    m_balapp.reboot_scheduled = true;
+    NRF_LOG_INFO("boron missing");
+    NRF_LOG_FLUSH();
+    return;
+    }
+  // here would be place to validate response, if needed
+  bsp_board_led_off(1);
+  bsp_board_led_off(2);
+  bsp_board_led_off(3);
+  FSM(101);
+  }
 
 // Used for testing -- how to change MAC address (for spoofing, for emulating, etc)
 void setmac() {
@@ -412,6 +488,24 @@ void reboot() {
 		 BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION);
   err_code = sd_nvic_SystemReset();
   APP_ERROR_CHECK(err_code);
+  }
+void softdevice_init() {
+  ret_code_t err_code;
+  err_code = nrf_sdh_enable_request();
+  APP_ERROR_CHECK(err_code);
+  }
+void appsched_init() {
+  APP_SCHED_INIT(SCHED_MAX_EVENT_DATA_SIZE, SCHED_QUEUE_SIZE);
+  }
+void reset() {
+  ret_code_t err_code;
+  nrf_ble_scan_stop();
+  sd_ble_gap_disconnect(m_balapp.conn_handle,
+     BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION);
+  err_code = nrf_sdh_disable_request();
+  APP_ERROR_CHECK(err_code);
+  appsched_init();
+  softdevice_init();
   }
 /*
 void connect_task(void * parameter, uint16_t size) {
@@ -741,11 +835,14 @@ void timer_handler(void * p_context) {
 // handler called regularly by clockapi, once per second 
 void auxiliary_tick_handler(uint32_t t) {
   if (m_balapp.start_clock == 0) m_balapp.start_clock = get_clock();
+  nrfx_wdt_feed();
+  /*
   if (m_balapp.latest_reading != 0 &&
       (get_clock()-m_balapp.latest_reading > 2)) {
 	 show_readings();
 	 m_balapp.reboot_scheduled = true; 
 	 } 
+  */
   }
 
 void kickoff_handler(void * p_context) {
@@ -756,11 +853,6 @@ void timers_init(void) {
   ret_code_t err_code;
   err_code = app_timer_init();
   APP_ERROR_CHECK(err_code);
-  /*  REPLACED BY clockapi
-  err_code = app_timer_create(&timer_id,
-                  APP_TIMER_MODE_REPEATED, timer_handler);
-  APP_ERROR_CHECK(err_code);
-  */
   err_code = app_timer_create(&kickoff_id,
                   APP_TIMER_MODE_SINGLE_SHOT,
                   kickoff_handler);
@@ -808,6 +900,7 @@ void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context) {
       err_code = sd_ble_gap_tx_power_set(BLE_GAP_TX_POWER_ROLE_CONN,
 		   m_balapp.conn_handle,8); 
       APP_ERROR_CHECK(err_code);
+      m_balapp.connected = true;
       FSM(1);   // start discovery
       break;
 
@@ -817,8 +910,10 @@ void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context) {
              "Disconnected. reason: 0x%x phase: %d",
              p_gap_evt->params.disconnected.reason,
 	     m_balapp.phase);
-      show_readings();
-      m_balapp.reboot_scheduled = true;
+      m_balapp.connected = false;
+      NRF_LOG_INFO("num readings found = %d",m_balapp.num_readings);
+      if (m_balapp.num_readings == 0) m_balapp.reboot_scheduled = true;
+      else m_balapp.cursor_readings = 0; // the idle loop will see what to do
       break;
 
     case BLE_GAP_EVT_TIMEOUT:
@@ -888,6 +983,7 @@ void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context) {
          err_code != NRF_ERROR_INVALID_STATE) {
          APP_ERROR_CHECK(err_code);
          }
+      m_balapp.connected = false;
       break;
 
     case BLE_GATTS_EVT_TIMEOUT:
@@ -899,6 +995,7 @@ void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context) {
          err_code != NRF_ERROR_INVALID_STATE) {
          APP_ERROR_CHECK(err_code);
 	 }
+      m_balapp.connected = false;
       break;
 
     case BLE_GAP_EVT_ADV_REPORT: {
@@ -1010,6 +1107,15 @@ void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context) {
      }
   }
 
+void wdthandler() { };
+void wdt_init() {
+  ret_code_t err_code;
+  err_code = nrfx_wdt_init(&wdtconfig,wdthandler);
+  APP_ERROR_CHECK(err_code);
+  err_code = nrfx_wdt_channel_alloc(&wdtchan);
+  APP_ERROR_CHECK(err_code);
+  nrfx_wdt_enable(); 
+  }
 
 void gatt_evt_handler(nrf_ble_gatt_t * p_gatt, 
 		nrf_ble_gatt_evt_t const * p_evt) {
@@ -1033,12 +1139,6 @@ void discovery_init() {
   err_code = ble_db_discovery_init(db_disc_handler); // set handler
   APP_ERROR_CHECK(err_code);
   err_code = ble_db_discovery_evt_register(&balance_uuid);
-  APP_ERROR_CHECK(err_code);
-  }
-
-void softdevice_init() {
-  ret_code_t err_code;
-  err_code = nrf_sdh_enable_request();
   APP_ERROR_CHECK(err_code);
   }
 
@@ -1083,6 +1183,14 @@ void buttons_leds_init(void) {
   // err_code = bsp_btn_ble_init(NULL, &startup_event);
   // APP_ERROR_CHECK(err_code);
   ledsoff();
+  /* EXTRA testing
+  nrf_gpio_cfg_output(0*32+3);
+  nrf_gpio_cfg_output(0*32+4);
+  nrf_gpio_cfg_output(0*32+28);
+  nrf_gpio_pin_set(0*32+3);
+  nrf_gpio_pin_clear(0*32+4);
+  nrf_gpio_pin_set(0*32+28);
+  */
   }
 
 void log_init(void) {
@@ -1125,13 +1233,15 @@ void app_init() {
 int main(void) {
   log_init();
   timers_init();
+  wdt_init();
   buttons_leds_init();
-  APP_SCHED_INIT(SCHED_MAX_EVENT_DATA_SIZE, SCHED_QUEUE_SIZE);
+  appsched_init();
   power_management_init();
   app_init();
   softdevice_init();
   ble_stack_init();
   gatt_init();
+  i2c_init();
   timers_start();
   clockapi_init();  // comes after timer init
   // discovery_init();
@@ -1139,8 +1249,14 @@ int main(void) {
   NRF_LOG_INFO("scan initiated");
   for (;;) {
     idle_state_handle();
-    NRF_LOG_FLUSH();
+    bsp_board_led_invert(0);
     if (m_balapp.reboot_scheduled) reboot();
+    if (!m_balapp.connected && m_balapp.num_readings > 0 && !m_balapp.pending_transfer) {
+      m_balapp.pending_transfer = true;
+      reset();
+      FSM(100); // curiously, app_sched_event_put(&m_balapp,100,&doFSM) does not work! 
+      }
+    NRF_LOG_FLUSH();
     app_sched_execute();
     }
   }

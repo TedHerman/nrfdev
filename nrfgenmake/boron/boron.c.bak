@@ -202,8 +202,7 @@ static ble_gap_conn_params_t m_conn_param = {
   .conn_sup_timeout  = CONN_SUP_TIMEOUT  
   };
 
-extern void clockapi_init();
-extern uint32_t get_clock();
+extern void boronapi_init();
 extern void message_clock_set(void * parameter, uint16_t size);
 extern uint8_t * clock_buffer;
 void cccd_indicate(uint16_t handle_cccd);
@@ -252,7 +251,7 @@ void save_reading() {
   p->sys = m_balapp.reading[1];
   p->dia = m_balapp.reading[3];
   p->pul = m_balapp.reading[11];
-  m_balapp.latest_reading = get_clock(); 
+  m_balapp.latest_reading = 0; 
   }
 void show_readings() {
   for (int i=0; i<m_balapp.num_readings; i++) {
@@ -459,7 +458,7 @@ void scan_inspect(ble_gap_evt_adv_report_t const * p_adv) {
   ret_code_t err_code;
   ble_data_t inspectName; // ble_data_t has just two fields, 
   ble_data_t inspectServ; //   len and p_data (pointer)
-  uint32_t now = get_clock();  // current unix time
+  uint32_t now = 0;  // current unix time
   uint16_t service_code = 0;
   bool foundName = false;
   // unclear we should be getting scan response packet (more advanced)
@@ -570,7 +569,7 @@ void send_date() {
   // device's clock is unix time (reverse digits) - 1262304000 (Jan 1 2010)
   // or maybe 2014? That would be 1388534400
   // uint32_t devclock = m_balapp.clock - 1262304000U; 
-  uint32_t devclock = get_clock() - 1262304000U; 
+  uint32_t devclock = 0; // get_clock() - 1262304000U; 
   uint8_t * k = (uint8_t*)&devclock;
   devclock -= 5*60*60;   // six-hour offset from UTC? DST? WTF? 
   setdate[0] = 0x02;  // opcode for setting date/time
@@ -737,16 +736,6 @@ void timer_handler(void * p_context) {
   // bsp_board_led_invert(0);
   }
 */
-
-// handler called regularly by clockapi, once per second 
-void auxiliary_tick_handler(uint32_t t) {
-  if (m_balapp.start_clock == 0) m_balapp.start_clock = get_clock();
-  if (m_balapp.latest_reading != 0 &&
-      (get_clock()-m_balapp.latest_reading > 2)) {
-	 show_readings();
-	 m_balapp.reboot_scheduled = true; 
-	 } 
-  }
 
 void kickoff_handler(void * p_context) {
   scan_start();
@@ -1133,7 +1122,7 @@ int main(void) {
   ble_stack_init();
   gatt_init();
   timers_start();
-  clockapi_init();  // comes after timer init
+  boronapi_init();  // comes after timer init
   // discovery_init();
   scan_init();
   NRF_LOG_INFO("scan initiated");

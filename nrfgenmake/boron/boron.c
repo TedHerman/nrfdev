@@ -228,6 +228,7 @@ extern void boronapi_read();
 extern bool boronapi_write(bps_reading_t * p); 
 extern void clockapi_init();
 extern uint32_t get_clock();
+extern void clock_set(uint32_t newclock);
 extern void message_clock_set(void * parameter, uint16_t size);
 extern uint8_t * clock_buffer;
 void cccd_indicate(uint16_t handle_cccd);
@@ -420,6 +421,14 @@ void boronapi_read_done( boronstate_t * p ) {
     m_balapp.isdst = m_balapp.boronstate.isdst;
     if (m_balapp.boronstate.connected) warning_clear();
     else warning_set();
+    if (m_balapp.boronstate.clock != 0) {
+      uint32_t clockone = get_clock();
+      uint32_t clocktwo = m_balapp.boronstate.clock;
+      if ((clockone >= clocktwo && (clockone-clocktwo) > 300)
+       || (clockone <  clocktwo && (clocktwo-clockone) > 300)) {
+	clock_set(clocktwo);
+        }
+      }
     }
   // case when pending transfer
   if (p == NULL) { // failure to contact boron
@@ -674,7 +683,8 @@ void send_date() {
   // uint32_t devclock = m_balapp.clock - 1262304000U; 
   uint32_t devclock = get_clock() - 1262304000U; 
   uint8_t * k = (uint8_t*)&devclock;
-  devclock -= 5*60*60;   // six-hour offset from UTC? DST? WTF? 
+  devclock -= 6*60*60;   // US Central is six-hour offset from UTC
+  if (m_balapp.isdst) devclock += 60*60;  // five hours if DST in effect 
   setdate[0] = 0x02;  // opcode for setting date/time
   // for (int i=0; i<4; i++) setdate[i+1] = *(k+3-i);
   for (int i=0; i<4; i++) setdate[i+1] = *(k+i);

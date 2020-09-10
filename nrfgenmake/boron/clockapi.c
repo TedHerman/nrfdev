@@ -391,6 +391,14 @@ void message_clock_set(void * parameter, uint16_t size) {
   ds3231_write();
   }
 
+void clock_set(uint32_t newclock) {
+  clock_fromepoch(newclock);           // place in ds3231clock
+  ds3231_normal_raw();                 // convert/copy to ds3231clock_raw 
+  twi_mode = 3;
+  if (!i2c_setaddr(DS3231_ADDR)) return;
+  ds3231_write();
+  }
+
 // handler called regularly for timer tick 
 APP_TIMER_DEF(second_tick_id);
 static void second_tick_handler(void * p_context) {

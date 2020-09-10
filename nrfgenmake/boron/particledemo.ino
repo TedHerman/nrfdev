@@ -14,6 +14,7 @@ PublishQueueAsync publishQueue(publishQueueRetainedBuffer, sizeof(publishQueueRe
 uint8_t lastpostday;
 uint8_t lastpostcount;
 
+ApplicationWatchdog* wd;
 
 boronstate_t boronstate = {
   .fence = {0xaa,0xbb,0xcc,0xdd},
@@ -37,6 +38,10 @@ bool timesynced;
 // int led1 = D0;
 int led2 = D7;
 CellularSignal rssi;
+
+void watchdogHandler() {
+  System.reset();
+  }
 
 void extColorPat(uint8_t pattern) {
   switch (pattern) {
@@ -81,6 +86,11 @@ void extColorPat(uint8_t pattern) {
       analogWrite(A2,100,25);
       delay(5000);
       break;
+    case 10: // purple
+      analogWrite(A0,50,500);
+      analogWrite(A1,0,500);
+      analogWrite(A2,100,500);
+      break;
     default:
       break;
     }
@@ -116,12 +126,18 @@ void i2cHandler(int amount) {
 
 // setup() runs once, when the device is first turned on.
 void setup() {
+  pinMode(A0,OUTPUT);
+  pinMode(A1,OUTPUT);
+  pinMode(A2,OUTPUT);
   readingQueueNum = 0;
   readingQueueHead = 0;
   Serial.begin(115200);
   Serial.printlnf("Serial started");
   BLE.off();
-  // Cellular.connect();
+  Cellular.on();
+  Cellular.connect();
+  extColorPat(10);
+  waitUntil(Cellular.ready);
   Particle.connect();
   waitUntil(Particle.connected);
   Wire.setSpeed(CLOCK_SPEED_100KHZ);
@@ -136,9 +152,7 @@ void setup() {
   Particle.syncTime();
   waitUntil(Particle.syncTimeDone);
   boronstate.clock = Time.now();
-  pinMode(A0,OUTPUT);
-  pinMode(A1,OUTPUT);
-  pinMode(A2,OUTPUT);
+  wd = new ApplicationWatchdog(300000, watchdogHandler, 1536);
   }
 
 // loop() runs over and over again, as quickly as it can execute.
@@ -146,7 +160,19 @@ void loop() {
   // post event if possible
   char databuf[122]; 
   uint8_t curday = Time.day();
-  boronstate.isdst = Time.isDST();
+  // feed the watchdog, hopefully every minute
+  wd->checkin(); 
+  // in each iteration, ensure cloud connection
+  boronstate.connected = Particle.connected();
+  if (!boronstate.connected) {
+    Cellular.on();
+    Cellular.connect();
+    extColorPat(10);
+    waitUntil(Cellular.ready);
+    Particle.connect();
+    waitUntil(Particle.connected);
+    }
+  boronstate.isdst = Time.isDST(); // THIS IS BOGUS - SEE DOCS
   if (curday != lastpostday) {
     morningreading = 0;
     eveningreading = 0;

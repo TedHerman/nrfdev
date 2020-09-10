@@ -138,7 +138,6 @@ struct readings_s {
 typedef struct balapp_s balapp_t;
 struct balapp_s {
   uint32_t start_clock;  // unix time when boot (read from DS3231)
-//  uint32_t clock;        // unix timer incremented each second 
   ble_gap_addr_t peer_addr;
   uint16_t conn_handle;
   bool exchange_completed;  // true after connect parameters settle
@@ -173,13 +172,17 @@ struct balapp_s {
   uint8_t phase;       // State in FSM of Control Flow
   bool reboot_scheduled;   // force reboot in idle loop
   bool pending_transfer;   // there are readings to transfer
-  bool connected;          // true if known to be connected
+  bool connected;          // true if known to be connected to BP mon
+  boronstate_t boronstate; // image of recent boron state
   ble_gattc_write_params_t writeparm;
   uint8_t num_readings; 
   uint8_t cursor_readings;  
   uint8_t boron_retries;   // only retry a few times ($$$ for bandwidth bugs!!)
+  bool isdst;              // marked True if in DST time zone
   readings_t readings[16]; // up to 16 readings
   uint32_t latest_reading; // timestamp of most recent HVX transfer
+  uint32_t clock;          // recent clock set in auxiliary_tick
+  uint32_t warn_clock;     // time of last warning check
   };
 balapp_t m_balapp;
 
@@ -221,7 +224,7 @@ static ble_gap_conn_params_t m_conn_param = {
   };
 
 void i2c_init(); 
-extern boronstate_t * boronapi_read();
+extern void boronapi_read();
 extern bool boronapi_write(bps_reading_t * p); 
 extern void clockapi_init();
 extern uint32_t get_clock();
@@ -236,6 +239,9 @@ void FSM(uint8_t newphase);
 void db_disc_handler(ble_db_discovery_evt_t * p_evt);
 void read_char(uint16_t handle);
 void read_info();
+void warning_clear();
+void warning_set();
+void softdevice_init();
 
 void assert_nrf_callback(uint16_t line_num, const uint8_t * p_file_name) {
   app_error_handler(0xDEADBEEF, line_num, p_file_name);
@@ -409,21 +415,23 @@ void boronapi_write_done( bool worked ) {
     }
   }	
 void boronapi_read_done( boronstate_t * p ) {
-  if (!m_balapp.pending_transfer) {
-    // here will be reaction to ordinary boron status query
-    return;
+  if (p != NULL) {
+    memcpy(&m_balapp.boronstate,p,sizeof(boronstate_t));
+    m_balapp.isdst = m_balapp.boronstate.isdst;
+    if (m_balapp.boronstate.connected) warning_clear();
+    else warning_set();
     }
   // case when pending transfer
   if (p == NULL) { // failure to contact boron
-    m_balapp.reboot_scheduled = true;
-    NRF_LOG_INFO("boron missing");
-    NRF_LOG_FLUSH();
+    memset(&m_balapp.boronstate,0,sizeof(boronstate_t));
+    warning_set();
     return;
     }
+  else {
+    memcpy(&m_balapp.boronstate,p,sizeof(boronstate_t));
+    }
+  if (!m_balapp.pending_transfer) return;
   // here would be place to validate response, if needed
-  bsp_board_led_off(1);
-  bsp_board_led_off(2);
-  bsp_board_led_off(3);
   FSM(101);
   }
 
@@ -834,15 +842,13 @@ void timer_handler(void * p_context) {
 
 // handler called regularly by clockapi, once per second 
 void auxiliary_tick_handler(uint32_t t) {
-  if (m_balapp.start_clock == 0) m_balapp.start_clock = get_clock();
+  m_balapp.clock = get_clock();
+  if (m_balapp.start_clock == 0) m_balapp.start_clock = m_balapp.clock;
   nrfx_wdt_feed();
-  /*
-  if (m_balapp.latest_reading != 0 &&
-      (get_clock()-m_balapp.latest_reading > 2)) {
-	 show_readings();
-	 m_balapp.reboot_scheduled = true; 
-	 } 
-  */
+  if (m_balapp.clock - m_balapp.warn_clock > 5) {
+    m_balapp.warn_clock = m_balapp.clock;
+    boronapi_read();  // NOTE: BE PREPARED IN read_done() !! 
+    }
   }
 
 void kickoff_handler(void * p_context) {
@@ -1175,6 +1181,18 @@ void bsp_event_handler(bsp_event_t event) {
      }
   }
 
+void warning_init() {
+  // let pin A0 = P0_3 be a signal
+  nrf_gpio_cfg_output(0*32+3);  // see boards.h etc for macro
+  nrf_gpio_pin_clear(0*32+3);
+  }	
+void warning_clear() { 
+  nrf_gpio_pin_clear(0*32+3);
+  }
+void warning_set() {
+  nrf_gpio_pin_set(0*32+3);
+  }
+
 void buttons_leds_init(void) {
   ret_code_t err_code;
   // bsp_event_t startup_event;
@@ -1183,6 +1201,7 @@ void buttons_leds_init(void) {
   // err_code = bsp_btn_ble_init(NULL, &startup_event);
   // APP_ERROR_CHECK(err_code);
   ledsoff();
+  warning_init();
   /* EXTRA testing
   nrf_gpio_cfg_output(0*32+3);
   nrf_gpio_cfg_output(0*32+4);

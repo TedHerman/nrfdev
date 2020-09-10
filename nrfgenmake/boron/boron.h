@@ -2,7 +2,10 @@
 typedef struct {
   uint8_t fence[4];  // should be aabbccdd
   uint32_t clock;
-  uint32_t lastpost; // timestamp of last reading sent to cloud
+  bool isdst;     // true if current clock is on daylight savings
+  bool connected; // true if Particle.connected() 
+  bool capped;    // true if too many BPS readings in current day 
+  bool clinic;    // true if clinic should be called ASAP
   } boronstate_t;
 // The structure that Boron expects for I2C write
 typedef struct {

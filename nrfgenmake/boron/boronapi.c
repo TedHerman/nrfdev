@@ -37,8 +37,8 @@ uint8_t i2c_buffer[64];
 
 void boron_read(void * parameter, uint16_t size) {
   ret_code_t err_code;
-  NRF_LOG_INFO("trying to set address to boron");
-  NRF_LOG_FLUSH();
+  // NRF_LOG_INFO("trying to set address to boron");
+  // NRF_LOG_FLUSH();
   if (!i2c_setaddr(BORON_ADDR)) {
     boronapi_read_done(NULL);
     return;

@@ -1,14 +1,27 @@
-/*
- * Project particledemo
- * Description:
- * Author:
- * Date:
- */
+#include "Particle.h"
 #include "boron.h"
+#include "PublishQueueAsyncRK.h"
+
+SYSTEM_THREAD(ENABLED);
+SYSTEM_MODE(SEMI_AUTOMATIC);
+STARTUP(System.enableFeature(FEATURE_RETAINED_MEMORY));
+
+// use the command particle library add PublishQueueAsyncRK to add in the 
+// the PublishQueueAsyncRK library
+
+retained uint8_t publishQueueRetainedBuffer[1024];
+PublishQueueAsync publishQueue(publishQueueRetainedBuffer, sizeof(publishQueueRetainedBuffer));
+uint8_t lastpostday;
+uint8_t lastpostcount;
+
 
 boronstate_t boronstate = {
   .fence = {0xaa,0xbb,0xcc,0xdd},
-  .clock = 0   
+  .clock = 0,
+  .isdst = false,
+  .connected = false,
+  .capped = false,
+  .clinic = false
   };
 
 #define BPSQUEUESIZE 16
@@ -16,10 +29,10 @@ bps_reading_t readingQueue[BPSQUEUESIZE];
 uint8_t readingQueueNum;
 uint8_t readingQueueHead;
 
-
-int counter = 0;
+uint32_t morningreading;
+uint32_t eveningreading;
+uint32_t counter = 0;
 int numPublished = 0;
-bool connected;
 bool timesynced;
 // int led1 = D0;
 int led2 = D7;
@@ -27,19 +40,47 @@ CellularSignal rssi;
 
 void extColorPat(uint8_t pattern) {
   switch (pattern) {
-    case 0:  // 1 second, increasing, blue+green
-      for (int i=50; i<100; i += 5) {
+    case 0:  // 2.5 second, increasing, blue+green
+      for (int i=0; i<=100; i+=2) {
+        analogWrite(A0,0,500);
         analogWrite(A1,i,500);
         analogWrite(A2,i,500);
-        delay(100);
+        delay(50);
         }
       break;
-    case 1: // 1 second, decreasing, blue+green
-      for (int i=100; i>50; i -= 5) {
+    case 1: // 2.5 second, decreasing, blue+green
+      for (int i=100; i>=0; i-=2) {
+        analogWrite(A0,0,500);
         analogWrite(A1,i,500);
         analogWrite(A2,i,500);
-        delay(100);
+        delay(50);
         }
+        break;
+    case 2: // 2.5 second, increasing green+red
+      for (int i=0; i<=100; i+=2) {
+        int j = (4*i)/5;
+        if (i>0 && j==0) j = 1;
+        analogWrite(A0,i,500);  
+        analogWrite(A1,j,500);
+        analogWrite(A2,0,500);
+        delay(50);
+        }
+      break;
+     case 3: // 2.5 second, decreasing green+red
+      for (int i=100; i>=0; i-=2) {
+        int j = (4*i)/5;
+        analogWrite(A0,i,500);  
+        analogWrite(A1,j,500);
+        analogWrite(A2,0,500);
+        delay(50);
+        }
+      break;
+    case 9: // 5 seconds, blinky blue
+      analogWrite(A0,0,25);
+      analogWrite(A1,0,25);
+      analogWrite(A2,100,25);
+      delay(5000);
+      break;
     default:
       break;
     }
@@ -48,6 +89,7 @@ void extColorPat(uint8_t pattern) {
 void i2cWandler() {
   Serial.println("i2cWandler called");
   uint8_t buffer[32];
+  boronstate.connected = Particle.connected();
   memcpy(buffer,(uint8_t*)&boronstate,sizeof(boronstate));
   Wire.write(buffer,sizeof(boronstate));
   }
@@ -78,15 +120,10 @@ void setup() {
   readingQueueHead = 0;
   Serial.begin(115200);
   Serial.printlnf("Serial started");
-  if (Cellular.connecting()) Serial.println("Cellular connecting");
-  // Cellular.on();
-  Serial.printlnf("Cellular on");
   BLE.off();
   // Cellular.connect();
-  Serial.printlnf("Cellular connected");
   Particle.connect();
   waitUntil(Particle.connected);
-  rssi = Cellular.RSSI();
   Wire.setSpeed(CLOCK_SPEED_100KHZ);
   Wire.stretchClock(true);
   Wire.begin(4);
@@ -108,34 +145,57 @@ void setup() {
 void loop() {
   // post event if possible
   char databuf[122]; 
+  uint8_t curday = Time.day();
+  boronstate.isdst = Time.isDST();
+  if (curday != lastpostday) {
+    morningreading = 0;
+    eveningreading = 0;
+    lastpostcount = 0;
+    }
+  if (curday == lastpostday && lastpostcount > 5) {
+    boronstate.capped = true;
+    }
+  else boronstate.capped = false;
   memset(databuf,0,sizeof(databuf));
+  rssi = Cellular.RSSI();
   if (Particle.connected() && readingQueueNum > 0) {
     uint8_t i = readingQueueHead;
-    bool r;
     sprintf(databuf,"%d,%d,%d,%d,%d,%d",
       (int)boronstate.clock,(int)rssi.getStrength(),
       (int)readingQueue[i].clock,(int)readingQueue[i].systolic,
       (int)readingQueue[i].diastolic,(int)readingQueue[i].pulse);
-    r = Particle.publish("boomerangtest",databuf,PRIVATE);
-    if (!r) Serial.printlnf("publish response: failure",r); 
-    else { 
-      numPublished++;
-      readingQueueNum--;
-      readingQueueHead = (readingQueueHead+1) % BPSQUEUESIZE;
-      Serial.printlnf("published reading %d",numPublished);
-      }
+    publishQueue.publish("boomerangtest",databuf,PRIVATE,WITH_ACK);
+    numPublished++;
+    readingQueueNum--;
+    readingQueueHead = (readingQueueHead+1) % BPSQUEUESIZE;
+    lastpostday = curday;
+    if (lastpostcount == 0 && morningreading == 0) 
+      morningreading = Time.now();
+    if (lastpostcount == 0 && morningreading > 0 
+      && eveningreading == 0) 
+      eveningreading = Time.now();
+    lastpostcount++;
+    Serial.printlnf("scheduled publish for reading %d",numPublished);
+    extColorPat(9);
     }
 
-  // in each iteration, blink one led  
-  // digitalWrite(led2, HIGH);
-  extColorPat(0);
-  extColorPat(1);
+  if (lastpostcount == 0) {
+    extColorPat(2);
+    extColorPat(3);
+    }
+  else {
+    extColorPat(0);
+    extColorPat(1);
+    }
   boronstate.clock = Time.now();
-  counter += 2;
+  if (eveningreading == 0 
+      && (boronstate.clock - morningreading > 8*60*60)) {
+    lastpostcount = 0;  // refresh counter for afternoon
+    }
   // Serial.printlnf("clock = %d",boronstate.clock);
-  if (counter > 3600*3) {
+  if (Time.second()-counter > 3600*3) {
     Particle.syncTime();
     Particle.publishVitals();
-    counter = 0;
+    counter = Time.second();
     }
   }

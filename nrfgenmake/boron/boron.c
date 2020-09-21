@@ -240,8 +240,6 @@ void FSM(uint8_t newphase);
 void db_disc_handler(ble_db_discovery_evt_t * p_evt);
 void read_char(uint16_t handle);
 void read_info();
-void warning_clear();
-void warning_set();
 void softdevice_init();
 
 void assert_nrf_callback(uint16_t line_num, const uint8_t * p_file_name) {
@@ -419,8 +417,6 @@ void boronapi_read_done( boronstate_t * p ) {
   if (p != NULL) {
     memcpy(&m_balapp.boronstate,p,sizeof(boronstate_t));
     m_balapp.isdst = m_balapp.boronstate.isdst;
-    if (m_balapp.boronstate.connected) warning_clear();
-    else warning_set();
     if (m_balapp.boronstate.clock != 0) {
       uint32_t clockone = get_clock();
       uint32_t clocktwo = m_balapp.boronstate.clock;
@@ -433,7 +429,6 @@ void boronapi_read_done( boronstate_t * p ) {
   // case when pending transfer
   if (p == NULL) { // failure to contact boron
     memset(&m_balapp.boronstate,0,sizeof(boronstate_t));
-    warning_set();
     return;
     }
   else {
@@ -842,14 +837,6 @@ void soc_evt_handler(uint32_t evt_id, void * p_context) {
     }
   }
 
-/*
-void timer_handler(void * p_context) {
-  UNUSED_PARAMETER(p_context);
-  m_balapp.clock++;
-  // bsp_board_led_invert(0);
-  }
-*/
-
 // handler called regularly by clockapi, once per second 
 void auxiliary_tick_handler(uint32_t t) {
   m_balapp.clock = get_clock();
@@ -858,6 +845,19 @@ void auxiliary_tick_handler(uint32_t t) {
   if (m_balapp.clock - m_balapp.warn_clock > 5) {
     m_balapp.warn_clock = m_balapp.clock;
     boronapi_read();  // NOTE: BE PREPARED IN read_done() !! 
+    }
+  bsp_board_led_on(1); 
+  if (m_balapp.boronstate.clock == 0) {
+    bsp_board_led_invert(1); // red
+    bsp_board_led_on(2); bsp_board_led_on(3); 
+    }
+  else if (m_balapp.boronstate.connected) { 
+    bsp_board_led_invert(2); // green
+    bsp_board_led_on(1); bsp_board_led_on(3); 
+    }
+  else {
+    bsp_board_led_invert(3); // blue
+    bsp_board_led_on(1); bsp_board_led_on(2); 
     }
   }
 
@@ -1191,18 +1191,6 @@ void bsp_event_handler(bsp_event_t event) {
      }
   }
 
-void warning_init() {
-  // let pin A0 = P0_3 be a signal
-  nrf_gpio_cfg_output(0*32+3);  // see boards.h etc for macro
-  nrf_gpio_pin_clear(0*32+3);
-  }	
-void warning_clear() { 
-  nrf_gpio_pin_clear(0*32+3);
-  }
-void warning_set() {
-  nrf_gpio_pin_set(0*32+3);
-  }
-
 void buttons_leds_init(void) {
   ret_code_t err_code;
   // bsp_event_t startup_event;
@@ -1211,7 +1199,6 @@ void buttons_leds_init(void) {
   // err_code = bsp_btn_ble_init(NULL, &startup_event);
   // APP_ERROR_CHECK(err_code);
   ledsoff();
-  warning_init();
   /* EXTRA testing
   nrf_gpio_cfg_output(0*32+3);
   nrf_gpio_cfg_output(0*32+4);
@@ -1278,7 +1265,6 @@ int main(void) {
   NRF_LOG_INFO("scan initiated");
   for (;;) {
     idle_state_handle();
-    bsp_board_led_invert(0);
     if (m_balapp.reboot_scheduled) reboot();
     if (!m_balapp.connected && m_balapp.num_readings > 0 && !m_balapp.pending_transfer) {
       m_balapp.pending_transfer = true;

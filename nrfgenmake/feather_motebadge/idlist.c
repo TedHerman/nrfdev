@@ -1,6 +1,21 @@
 #include <string.h>
 #include "ble_gap.h" 
 
+/****************************************************
+ * IMPORTANT notes.                                 *
+ * 1. there are multiple idlist.c files, should be  *
+ *    somehow consolidated to keep them in sync!    *
+ * 2. discover new entries - currently done by      *
+ *    using feather_motebadge, running it with      *
+ *    Segger's JLinkExe in one window, connecting   *
+ *    to the nRF52, then running JLinkRTTClient in  *
+ *    another window, to get debugging. Function    *
+ *    find_mac_addr below will fail, and there will *
+ *    be some NRF_LOG_INFO message telling what is  *
+ *    the missing MAC address, to be added to the   *
+ *    addr_list below.                              *
+ ***************************************************/
+
 typedef struct {
   uint8_t addr[BLE_GAP_ADDR_LEN]; 
   } master_addr_t;

@@ -1,11 +1,24 @@
 #include <string.h>
-#include "boards.h"
+#include "ble_gap.h" 
 
-#include "nrf_log.h"
-#include "nrf_log_ctrl.h"
-#include "nrf_log_default_backends.h"
+/****************************************************
+ * IMPORTANT notes.                                 *
+ * 1. there are multiple idlist.c files, should be  *
+ *    somehow consolidated to keep them in sync!    *
+ * 2. discover new entries - currently done by      *
+ *    using feather_motebadge, running it with      *
+ *    Segger's JLinkExe in one window, connecting   *
+ *    to the nRF52, then running JLinkRTTClient in  *
+ *    another window, to get debugging. Function    *
+ *    find_mac_addr below will fail, and there will *
+ *    be some NRF_LOG_INFO message telling what is  *
+ *    the missing MAC address, to be added to the   *
+ *    addr_list below.                              *
+ ***************************************************/
 
-typedef struct { uint8_t addr[6]; } master_addr_t;
+typedef struct {
+  uint8_t addr[BLE_GAP_ADDR_LEN]; 
+  } master_addr_t;
 
 master_addr_t master_addr_list[] = 
   { { {0xfe,0xe0,0x17,0x9c,0xd9,0xe3} },   // mote 01
@@ -42,28 +55,17 @@ master_addr_t master_addr_list[] =
     { {0x21,0x66,0x10,0xaf,0x82,0xd0} },
     { {0xd6,0x3d,0xbf,0x8a,0xa8,0xd1} },
     { {0x33,0xc3,0x6a,0xf2,0x48,0xce} },
-    { {0x00,0x00,0x00,0x00,0x00,0x00} },   // mote 35
+    { {0xc3,0xd0,0xc6,0x17,0x2a,0xfe} },   // mote 35 
+    { {0x99,0xb7,0x35,0xa2,0x79,0xd6} },
       };
 
-master_addr_t node_addr_list[] = 
-  { { {0xb5,0xf5,0xc6,0x81,0x3f,0xca} },   // mote 10000  
-      };
-
-int16_t get_node_id() {
+int16_t find_mac_addr(ble_gap_addr_t ble_addr) {
   int16_t i;
-  uint8_t * p = (uint8_t*) NRF_FICR->DEVICEADDR;
   for (i=0; i<sizeof(master_addr_list); i++) {
-    if (memcmp(master_addr_list[i].addr,p,6) == 0) break;
+    if (memcmp(master_addr_list[i].addr,
+               (uint8_t*)&ble_addr.addr,
+               BLE_GAP_ADDR_LEN) == 0) break;
     }
-  if (i < sizeof(master_addr_list)) return i+1; 
-  for (i=0; i<sizeof(node_addr_list); i++) {
-    if (memcmp(node_addr_list[i].addr,p,6) == 0) break;
-    }
-  if (i >= sizeof(node_addr_list)) {
-    NRF_LOG_INFO("mac address, not in table, is");
-    NRF_LOG_HEXDUMP_INFO(p,6);
-    NRF_LOG_FLUSH();
-    APP_ERROR_CHECK(i);
-    }
-  return i+10000+1;
+  if (i >= sizeof(master_addr_list)) return -1;
+  return i+1;
   }

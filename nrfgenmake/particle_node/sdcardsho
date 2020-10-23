@@ -1,0 +1,66 @@
+#!/usr/bin/env python3
+
+import serial, sys, os, subprocess
+import time, datetime
+
+fence = b'\x00\x00\x00\x00\xaaU\xaaU\xaaU\xaaU'
+
+def getfile():
+  cmd = "/usr/bin/find /media -name ANCR*.DAT".split() 
+  S = subprocess.Popen(cmd,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+  R = S.communicate()
+  if not isinstance(R[0],bytes):
+    print("SD card media file not found")
+    sys.exit(1)
+  L = R[0].split()
+  F = None
+  for candidate in L:
+    name = candidate.split(b'/')[-1]
+    if name.startswith(b'ANCR') and name.endswith(b'.DAT'): 
+      F = candidate
+      break
+  if not F: 
+    print("SD card media file not found")
+    sys.exit(1)
+  with open(F,'rb') as V:
+    return V.read()  # entire content of file
+
+def procrec(P,offset):
+  p = P[offset:5+offset]
+  ptime = p[3]*256*256*256 + p[2]*256*256 + p[1]*256 + p[0]
+  if ptime > 1550000000:
+    ptime = datetime.datetime.fromtimestamp(ptime)
+  rssi = p[4] 
+  result = "{0}: msg rssi {1} ".format(ptime,rssi)
+  p = P[5+offset:5+6+offset]
+  ptime = p[3]*256*256*256 + p[2]*256*256 + p[1]*256 + p[0]
+  if ptime > 1550000000:
+    ptime = datetime.datetime.fromtimestamp(ptime)
+  moteid = p[4] 
+  result += "<- badge {0:02d} @ {1} ".format(moteid,ptime)
+  numrep = p[5]
+  newoffset = 11  # where the variable stuff starts 
+  for i in range(numrep):
+    other,rssi = P[offset+newoffset+i*2],P[offset+newoffset+i*2+1]
+    result += "[{0}:{1}] ".format(other,rssi)
+  sys.stdout.write(result + "\n")
+  return newoffset + 2*numrep
+
+def procblock(S):
+  n = S[1]*256 + S[0] # number of records
+  cursor = 2  # offset to where the first record starts
+  for i in range(n): 
+    cursor += procrec(S,cursor)
+
+def convert():
+  B = getfile()
+  if not B: sys.exit(1)
+  C = B.split(fence)
+  for R in C:
+    S = bytearray(R)    # make processing easy with array of int
+    if not S: continue  # first element of split is empty (fence at begin) 
+    n = S[1]*256 + S[0] # node ID  
+    print("NODE",n)
+    procblock(S[2:])
+
+convert()

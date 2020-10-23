@@ -46,9 +46,11 @@ static diskio_blkdev_t drives[] = \
 
 void set_file_name(uint8_t* p) {
   // set a customized file name for this node
-  char basename[] = "ANCHR000.DAT";
+  char basename[] = "ANCR0000.DAT";
   memcpy(p,basename,13);
   uint16_t node_suffix = node_addr%10000;  
+  p[4] = '0' + (node_suffix / 1000); 
+  node_suffix = node_suffix % 1000; 
   p[5] = '0' + (node_suffix / 100);
   node_suffix = node_suffix % 100; 
   p[6] = '0' + (node_suffix / 10);
@@ -57,34 +59,72 @@ void set_file_name(uint8_t* p) {
   return;
   }
 
-int data_store(uint8_t* data, uint16_t data_len) {
-  // return 0 if file opened and written, else return -1
+bool data_avail() {
+  FRESULT ff_result;
+  DSTATUS disk_state = STA_NOINIT;
+  // register just assigns variables, should never fail
+  diskio_blockdev_register(drives, ARRAY_SIZE(drives));
+  // disk_initialize might fail, and has timing difficulties
+  for (uint32_t retries = 8; retries && disk_state; --retries) { 
+    NRF_LOG_INFO("disk init try ..."); 
+    disk_state = disk_initialize(0); 
+    };
+  if (disk_state) { 
+    bsp_board_led_off(3);
+    NRF_LOG_INFO("Disk initialization failed."); 
+    return false; 
+    }
+  NRF_LOG_INFO("Mounting volume...");
+  ff_result = f_mount(&fs, "", 1);
+  if (ff_result) { NRF_LOG_INFO("Mount failed."); return false; }
+  f_mount(NULL,"", 0);
+  bsp_board_led_on(3);
+  bsp_board_led_off(2);
+  return true; 
+  }
+
+bool data_store(uint8_t* data, uint16_t data_len) {
+  // return true if file opened and written, else return false 
   uint32_t bytes_written;
   uint8_t file_name[13];
   FRESULT ff_result;
   DSTATUS disk_state = STA_NOINIT;
   // register just assigns variables, should never fail
   diskio_blockdev_register(drives, ARRAY_SIZE(drives));
+  NRF_LOG_INFO("data_store for %d bytes",data_len);
   // disk_initialize might fail, and has timing difficulties
-  for (uint32_t retries = 8; retries && disk_state; --retries) 
+  for (uint32_t retries = 8; retries && disk_state; --retries) { 
+    NRF_LOG_INFO("disk init try ..."); 
     disk_state = disk_initialize(0); 
-  if (disk_state) { NRF_LOG_INFO("Disk initialization failed."); return -1; }
+    };
+  if (disk_state) { 
+    bsp_board_led_off(3);
+    NRF_LOG_INFO("Disk initialization failed."); 
+    return false; 
+    }
   NRF_LOG_INFO("Mounting volume...");
   ff_result = f_mount(&fs, "", 1);
   if (ff_result) { NRF_LOG_INFO("Mount failed."); return -1; }
   set_file_name(file_name);
   ff_result = f_open(&file,(const TCHAR*)file_name, FA_READ | FA_WRITE | FA_OPEN_APPEND);
-  if (ff_result != FR_OK) { NRF_LOG_INFO("Unable open file"); return -1; }
+  if (ff_result != FR_OK) { 
+    NRF_LOG_INFO("Unable open file"); 
+    NRF_LOG_HEXDUMP_INFO(file_name,13);
+    return false; 
+    }
   // NRF_LOG_INFO("Preparing to write %d bytes",data_len);
   // NRF_LOG_FLUSH();
   ff_result = f_write(&file, data, data_len, (UINT *)&bytes_written);
   if (ff_result != FR_OK) {
     NRF_LOG_INFO("Write failed");
     f_close(&file);
-    return -1;
+    return false;
     }
   f_close(&file);
   f_mount(NULL,"", 0);
   NRF_LOG_INFO("%d bytes saved in file",data_len);
-  return 0;
+  NRF_LOG_FLUSH();
+  bsp_board_led_on(3);
+  bsp_board_led_off(2);
+  return true;
   }

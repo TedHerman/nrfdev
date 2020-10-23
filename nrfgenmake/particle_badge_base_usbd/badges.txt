@@ -596,3 +596,29 @@ Mote 9 at time 2019-08-12 18:24:28 saw 20 with rssi 196 base rssi 187
 Mote 20 at time 2019-08-12 18:24:24 base rssi 178
 Mote 9 at time 2019-08-12 18:24:36 saw 20 with rssi 196 base rssi 186
 ---------------------------------
+hello
+
+Mote 9 at time 2020-10-20 19:57:22 base rssi 177
+Mote 26 at time 2020-10-20 19:57:23 base rssi 181
+Mote 9 at time 2020-10-20 19:57:30 base rssi 174
+Mote 26 at time 2020-10-20 19:57:31 base rssi 180
+Mote 26 at time 2020-10-20 19:57:39 base rssi 180
+Mote 9 at time 2020-10-20 19:57:38 base rssi 174
+Mote 9 at time 2020-10-20 19:57:46 base rssi 175
+Mote 26 at time 2020-10-20 19:57:47 base rssi 180
+Mote 9 at time 2020-10-20 19:57:54 base rssi 174
+Mote 26 at time 2020-10-20 19:57:55 base rssi 181
+Mote 9 at time 2020-10-20 19:58:02 base rssi 174
+Mote 26 at time 2020-10-20 19:58:03 base rssi 180
+Mote 26 at time 2020-10-20 19:58:11 base rssi 182
+Mote 9 at time 2020-10-20 19:58:10 base rssi 174
+Mote 9 at time 2020-10-20 19:58:18 base rssi 178
+Mote 26 at time 2020-10-20 19:58:19 base rssi 182
+Mote 9 at time 2020-10-20 19:58:26 base rssi 178
+Mote 26 at time 2020-10-20 19:58:27 base rssi 182
+Mote 9 at time 2020-10-20 19:58:34 base rssi 178
+Mote 26 at time 2020-10-20 19:58:35 base rssi 181
+Mote 26 at time 2020-10-20 19:58:43 base rssi 180
+Mote 9 at time 2020-10-20 19:58:42 base rssi 178
+Mote 9 at time 2020-10-20 19:58:50 base rssi 175
+---------------------------------

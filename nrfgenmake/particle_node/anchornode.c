@@ -18,6 +18,12 @@
 #include "app_timer.h"
 #include "app_scheduler.h"
 
+#include "app_usbd_core.h"
+#include "app_usbd.h"
+#include "app_usbd_string_desc.h"
+#include "app_usbd_cdc_acm.h"
+#include "app_usbd_serial_num.h"
+
 #include "nrf_802154.h"
 #include "IEEE802154.h"
 
@@ -35,21 +41,27 @@
 #define SCHED_QUEUE_SIZE 256
 
 extern int16_t get_node_id();
-extern int data_store(uint8_t* data, uint16_t data_len);
+extern bool data_store(uint8_t* data, uint16_t data_len);
+extern bool data_avail();
 extern void clockapi_init();
 extern uint32_t get_clock();
 extern void message_clock_set(void * parameter, uint16_t size); 
 extern uint8_t * clock_buffer;
+extern void usb_init();
+extern uint32_t clock_via_usb;
+extern void clock_set(uint32_t newclock);
+void leds_off();
 
 // data for messages and recording mote information
 uint8_t fence[] = {0x00,0x00,0x00,0x00,0xaa,0x55,0xaa,0x55,0xaa,0x55,0xaa,0x55};
 uint8_t motepool[66*1024];     // up to 64k, we have a bit of slop here 
 volatile uint16_t motepool_size = 0; // offset to last byte recorded in motepool
-uint32_t last_pool_init;       // time of last write to SD card 
 uint8_t data_buffer[PACKET_MAX_PAYLOAD];  // for data transfer (extra byte for rssi)
 uint8_t data_buffer_rssi;                 // rssi for above data
 int16_t node_addr;
 static volatile bool file_op_running;     // when SD card being active
+bool app_active;  // true after initialization of clock  
+uint32_t local_clock;  // counter for how long app has been up w/o reboot
 
 // variables for packet generation
 uint8_t data_seq_no = 0;
@@ -66,21 +78,23 @@ uint8_t pan_id[]           = {0x04, 0x05};
 uint8_t buffer[sizeof(motepacket_t)];
 motepacket_t * p = (motepacket_t *)&buffer;
 
+nrfx_wdt_channel_id wdtchan = 1;
+nrfx_wdt_config_t wdtconfig = NRFX_WDT_DEAFULT_CONFIG;
+
 // code for messages
 void clock_bcast(void);
 void motesetup(void);
 
 void nrf_802154_transmitted_raw(const uint8_t *p_frame,
                 uint8_t *p_ack, int8_t power, uint8_t lqi) {
-    nrf_802154_receive();  // reset mode of radio stack after transmit
-    }
+  nrf_802154_receive();  // reset mode of radio stack after transmit
+  }
 void nrf_802154_transmit_failed (const uint8_t *p_frame, nrf_802154_tx_error_t error) {
-    nrf_802154_receive();
-    }
+  nrf_802154_receive();
+  }
 
 void mote_send_clock(void * parameter, uint16_t size) {
   uint32_t t;
-  bsp_board_led_invert(1);
   memset((uint8_t*)&sync_message,0,sizeof(motepacket_t));
   sync_message.fcf = 0x0000;
   sync_message.fcf &= 1 << IEEE154_FCF_ACK_REQ;
@@ -99,6 +113,7 @@ void mote_send_clock(void * parameter, uint16_t size) {
   sync_message.length =  offsetof(motepacket_t,data) + 2 + 4 - 1;
   t = get_clock();
   memcpy(sync_message.data,(uint8_t*)&t,4);
+  // NRF_LOG_INFO("broadcast clock %d",t);
   nrf_802154_transmit_raw((uint8_t*)&sync_message,true);
   }
 
@@ -106,41 +121,46 @@ void set_mote_receive(void * parameter, uint16_t size) {
   nrf_802154_receive(); 
   }
 void poolsetup() {
+  // pool header: fence, node id, counter (for number of records)
+  uint8_t * mpctr = motepool + sizeof(fence) + sizeof(node_addr);
+  uint16_t * motepool_counter = (uint16_t*)mpctr;
   memcpy(motepool,fence,sizeof(fence));
   memcpy(motepool+sizeof(fence),(uint8_t*)&node_addr,sizeof(node_addr));
   motepool_size = sizeof(node_addr) + sizeof(fence);
-  last_pool_init = get_clock();
+  *motepool_counter = 0;
+  motepool_size += sizeof(uint16_t);
   }
 void data_task(void * parameter, uint16_t size) {
   // do not save if there is nothing to save, or less than 6K because
   // we get timing problems with disk initialization on very small writes
-  if (motepool_size <= sizeof(node_addr) + sizeof(fence)) {
-    last_pool_init = get_clock();  // restart the init clock
-    return; 
-    }
+  if (motepool_size <= sizeof(node_addr) + sizeof(fence)) return; 
   file_op_running = true;
   nrf_802154_sleep();
   nrf_802154_deinit();
   data_store(motepool,motepool_size);
   file_op_running = false;
+  NVIC_SystemReset();
   poolsetup();
   motesetup();
   }
 void storepool(void * parameter, uint16_t size) {
   mote_report_t * p = (mote_report_t *)data_buffer; // skip over rssi for struct ptr
   uint8_t * q = motepool + motepool_size;   
-  uint8_t v = offsetof(mote_report_t,reports);   // offset of variable portion of data_buffer
-  uint8_t w = 4 + 1 + v; 
-  // above is timestamp+rssi+fixed-part-of-mote_report 
-  uint8_t x = w + sizeof(mote_received_t)*p->num_reports;
+  uint8_t * mpctr = motepool + sizeof(fence) + sizeof(node_addr);
+  uint16_t * motepool_counter = (uint16_t*)mpctr;
+  uint8_t v = offsetof(mote_report_t,reports);   // offset var portion of data_buffer
+  uint8_t w = 4 + 1 + v; // 4 + 1 for timestamp, rssi 
+  // v includes timestamp+rssi+numreports (six bytes)
+  uint8_t x = w + sizeof(mote_received_t)*p->num_reports; 
   // then x is total size, including variable part
   uint32_t t = get_clock();
   // timestamp and save message payload
   memcpy(q,(uint8_t*)&t,4); 
   *(q+4) = data_buffer_rssi; // rssi of this message
-  memcpy(q+5,p,v);
+  memcpy(q+5,p,v);  // copies timestamp,rssi,numreports
   if (p->num_reports > 0) memcpy(q+w,p->reports,sizeof(mote_received_t)*p->num_reports);
   motepool_size += x;
+  *motepool_counter  = 1 + *motepool_counter; 
   // NRF_LOG_INFO("%d message from mote %d time %d reports %d",
   //		  t,p->mote_id,p->time,p->num_reports);
   // NRF_LOG_HEXDUMP_INFO(q,x);
@@ -180,17 +200,16 @@ void nrf_802154_received_timestamp_raw(uint8_t * p_data, int8_t power,
   }
 
 void motesetup() {
-    nrf_802154_init();
-    nrf_802154_short_address_set(short_address);
-    nrf_802154_extended_address_set(extended_address);
-    nrf_802154_pan_id_set(pan_id);
-    nrf_802154_promiscuous_set(true);
-    nrf_802154_channel_set(CHANNEL);
-    nrf_802154_receive();
-    uint8_t state = nrf_802154_state_get();
-    NRF_LOG_INFO("Launch with 802.15.4 in state %d.",state)
-    bsp_board_led_invert(1); bsp_board_led_invert(2); bsp_board_led_invert(3);
-    }
+  nrf_802154_init();
+  nrf_802154_short_address_set(short_address);
+  nrf_802154_extended_address_set(extended_address);
+  nrf_802154_pan_id_set(pan_id);
+  nrf_802154_promiscuous_set(true);
+  nrf_802154_channel_set(CHANNEL);
+  nrf_802154_receive();
+  uint8_t state = nrf_802154_state_get();
+  NRF_LOG_INFO("Launch with 802.15.4 in state %d.",state)
+  }
 
 /*
 void nrf_802154_tx_started (const uint8_t *p_frame) {
@@ -199,27 +218,55 @@ void nrf_802154_tx_started (const uint8_t *p_frame) {
     }
     */
 
+void leds_off() {
+  bsp_board_led_on(0);
+  bsp_board_led_on(1);
+  bsp_board_led_on(2);
+  bsp_board_led_on(3);
+  }
+void leds_on() {
+  bsp_board_led_off(0);
+  bsp_board_led_off(1);
+  bsp_board_led_off(2);
+  bsp_board_led_off(3);
+  }
 void leds_init(void) {
-    // ret_code_t err_code;
-    bsp_board_init(BSP_INIT_LEDS);
-    }
+  // ret_code_t err_code;
+  bsp_board_init(BSP_INIT_LEDS);
+  leds_off();
+  }
 
 void log_init(void) {
-    ret_code_t err_code = NRF_LOG_INIT(NULL);
-    APP_ERROR_CHECK(err_code);
-    NRF_LOG_DEFAULT_BACKENDS_INIT();
-    }
+  ret_code_t err_code = NRF_LOG_INIT(NULL);
+  APP_ERROR_CHECK(err_code);
+  NRF_LOG_DEFAULT_BACKENDS_INIT();
+  }
+
+
+void wdthandler() { };
+void wdt_init() {
+  ret_code_t err_code;
+  err_code = nrfx_wdt_init(&wdtconfig,wdthandler);
+  APP_ERROR_CHECK(err_code);
+  err_code = nrfx_wdt_channel_alloc(&wdtchan);
+  APP_ERROR_CHECK(err_code);
+  nrfx_wdt_enable();
+  }
 
 void power_management_init(void) {
-    ret_code_t err_code;
-    err_code = nrf_pwr_mgmt_init();
-    APP_ERROR_CHECK(err_code);
-    }
+  ret_code_t err_code;
+  err_code = nrf_pwr_mgmt_init();
+  APP_ERROR_CHECK(err_code);
+  }
 
 // handler called regularly by each clock tick
+// except when at zero 
 void auxiliary_tick_handler(uint32_t t) {  
-  if (t % 60 == 3) app_sched_event_put(NULL,1,mote_send_clock);
-  if (t % 60 == 5 && (t-last_pool_init > 20*60)) 
+  bsp_board_led_invert(1);
+  local_clock++;
+  nrfx_wdt_feed();
+  if (local_clock % 60 == 3) app_sched_event_put(NULL,1,mote_send_clock);
+  if (local_clock % 60 == 5 && (local_clock > 20*60)) 
     app_sched_event_put(NULL,1,data_task);
   }
 
@@ -231,7 +278,10 @@ void timers_init(void) {
   APP_ERROR_CHECK(err_code);
   }
 
+
 int main(void) {
+  ret_code_t err_code;
+  app_active = false;
   log_init();
   node_addr = get_node_id();
   file_op_running = false;
@@ -243,14 +293,21 @@ int main(void) {
   leds_init();
   power_management_init();
   APP_SCHED_INIT(SCHED_MAX_EVENT_DATA_SIZE, SCHED_QUEUE_SIZE);
+  local_clock = 0;   // will be incremented by auxiliary event handler
   clockapi_init();
+  usb_init();
+  err_code = app_usbd_power_events_enable();
+  APP_ERROR_CHECK(err_code);
   poolsetup();
   motesetup();
+  data_avail();
+  wdt_init();
 
   // Enter main loop.
   for (;;) {
     NRF_LOG_FLUSH();
-    //  while (app_usbd_event_queue_process()) { }
+    // if (!app_active) while (app_usbd_event_queue_process()) { }
+    app_usbd_event_queue_process();
     app_sched_execute();
     nrf_pwr_mgmt_run();
     }

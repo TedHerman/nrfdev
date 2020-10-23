@@ -33,6 +33,7 @@ static uint32_t fresh_epoch_clock;
 uint8_t clock_buffer[4];
 uint8_t ds3231clock[6]; // for sec,min,hour,day,month,year
 uint8_t ds3231clock_raw[7];
+uint8_t sreg[8];  // outside of stack, work area for TWI sending
 static volatile uint8_t twi_mode = 0;  // 0 => idle; 1 => phase1; 2 => phase2; etc
 static const nrf_drv_twi_t m_twi = NRF_DRV_TWI_INSTANCE(TWI_INSTANCE_ID);
 
@@ -314,9 +315,9 @@ void clock_fromepoch(uint32_t etime) {
   t = t%3600;     // second offset into hour
   ds3231clock[1] = (uint8_t)(t / 60);   // calculate minute
   ds3231clock[0] = (uint8_t)(t % 60);   // set second 
-  // NRF_LOG_INFO("Computed year = %d month = %d day = %d",ds3231clock[5],ds3231clock[4],r);
-  // NRF_LOG_INFO("  hour = %d minute = %d second = %d",ds3231clock[2],ds3231clock[1],
-  //		  ds3231clock[0]);
+  //NRF_LOG_INFO("Computed year = %d month = %d day = %d",ds3231clock[5],ds3231clock[4],r);
+  //NRF_LOG_INFO("  hour = %d minute = %d second = %d",ds3231clock[2],ds3231clock[1],
+  //  		  ds3231clock[0]);
   }
 
 void ds3231_raw_normal() {
@@ -354,7 +355,7 @@ void ds3231_read_phase2(void * parameter, uint16_t size) {
   // NRF_LOG_HEXDUMP_INFO((uint8_t *)ds3231clock_raw,sizeof(ds3231clock_raw));
   R = epoch_fromclock();
   nrf_atomic_u32_store(&clock,*(uint32_t *)&R);
-  // NRF_LOG_INFO("clock %d",R);
+  // NRF_LOG_INFO(">> clock %d",R);
   // clock_fromepoch(R);
   // S = epoch_fromclock();
   // ds3231_normal_raw();
@@ -377,19 +378,27 @@ void ds3231_read_init(void * parameter, uint16_t size) {
   }
 void ds3231_write_phase4(void * parameter, uint16_t size) {
   twi_mode = 0;  // reset phase 
-  bsp_board_led_invert(2); bsp_board_led_invert(3);
+  // bsp_board_led_invert(2); bsp_board_led_invert(3);
   } 
 void ds3231_write_init(void * parameter, uint16_t size) { 
   ret_code_t err_code;
-  uint8_t reg[8];
   if (twi_mode != 3) return; // oops
-  reg[0] = 0; memcpy(&reg[1],ds3231clock_raw,7);  // register + values all in one call
+  // NRF_LOG_INFO("==============");
+  // NRF_LOG_HEXDUMP_INFO((uint8_t *)ds3231clock_raw,sizeof(ds3231clock_raw));
+  sreg[0] = 0; memcpy(&sreg[1],ds3231clock_raw,7);  // register + values all in one call
   twi_mode = 4;  // next is phase 4
-  err_code = nrf_drv_twi_tx(&m_twi, DS3231_ADDR, reg, sizeof(reg), false);
+  err_code = nrf_drv_twi_tx(&m_twi, DS3231_ADDR, sreg, sizeof(sreg), false);
   APP_ERROR_CHECK(err_code);
   }
 uint32_t get_clock() {
   return nrf_atomic_u32_add(&clock,0); 
+  }
+void clock_set(uint32_t newclock) {
+  uint8_t dummy = 0;
+  clock_fromepoch(newclock);           // place in ds3231clock
+  ds3231_normal_raw();                 // convert/copy to ds3231clock_raw
+  twi_mode = 3;
+  ds3231_write_init(&dummy,1);
   }
 void message_clock_set(void * parameter, uint16_t size) {
   // copy of clock data in clock_buffer

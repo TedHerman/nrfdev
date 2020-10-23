@@ -1,0 +1,29 @@
+#!/usr/bin/env python3
+
+import serial, sys, os, subprocess
+import time, datetime
+
+S = serial.Serial(baudrate=115200,port='/dev/ttyACM0',timeout=0.1) 
+
+def injectime():
+  '''
+  periodically, transmit a time-of-day message to
+  the basestation, which will then broadcast to all
+  badges within radio range, so they can adjust their
+  clocks (which are poor quality we assume); so this
+  has two goals: (1) initialize every badge clock, 
+  and (2) maintain the pace of clocks for many hours
+  by regular updates
+  '''
+  curtime = int(time.mktime(time.gmtime()))
+  print("***",curtime)
+  B = bytearray(8) # eight bytes of zeros 
+                   # (last four will be overwritten)
+  B[4] = (curtime >> 24)&0xff
+  B[5] = (curtime >> 16)&0xff
+  B[6] = (curtime >>  8)&0xff
+  B[7] = curtime &0xff  
+  S.write(bytes(B))
+  S.flush()
+
+injectime()

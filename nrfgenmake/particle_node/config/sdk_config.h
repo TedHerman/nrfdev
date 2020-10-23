@@ -7,13 +7,202 @@
 #endif
 // <h> nRF_Drivers 
 
-
 #ifndef NRF_SECTION_ITER_ENABLED
 #define NRF_SECTION_ITER_ENABLED 1
 #endif
 
+#ifndef NRFX_USBD_ENABLED
+#define NRFX_USBD_ENABLED 1
+#endif
+
+#ifndef NRFX_USBD_CONFIG_IRQ_PRIORITY
+#define NRFX_USBD_CONFIG_IRQ_PRIORITY 6
+#endif
+
+#ifndef NRFX_USBD_CONFIG_DMASCHEDULER_MODE
+#define NRFX_USBD_CONFIG_DMASCHEDULER_MODE 0
+#endif
+
+#ifndef NRFX_USBD_CONFIG_DMASCHEDULER_ISO_BOOST
+#define NRFX_USBD_CONFIG_DMASCHEDULER_ISO_BOOST 1
+#endif
+
+#ifndef NRFX_USBD_CONFIG_ISO_IN_ZLP
+#define NRFX_USBD_CONFIG_ISO_IN_ZLP 0
+#endif
+
+#ifndef USBD_ENABLED
+#define USBD_ENABLED 1
+#endif
+
+#ifndef USBD_CONFIG_IRQ_PRIORITY
+#define USBD_CONFIG_IRQ_PRIORITY 6
+#endif
+
+#ifndef USBD_CONFIG_DMASCHEDULER_MODE
+#define USBD_CONFIG_DMASCHEDULER_MODE 0
+#endif
+
+#ifndef USBD_CONFIG_DMASCHEDULER_ISO_BOOST
+#define USBD_CONFIG_DMASCHEDULER_ISO_BOOST 1
+#endif
+
+#ifndef USBD_CONFIG_ISO_IN_ZLP
+#define USBD_CONFIG_ISO_IN_ZLP 0
+#endif
+
+#ifndef APP_USBD_ENABLED
+#define APP_USBD_ENABLED 1
+#endif
+#ifndef APP_USBD_VID
+#define APP_USBD_VID 0x1915
+#endif
+#ifndef APP_USBD_PID
+#define APP_USBD_PID 0x520F
+#endif
+#ifndef APP_USBD_DEVICE_VER_MAJOR
+#define APP_USBD_DEVICE_VER_MAJOR 1
+#endif
+#ifndef APP_USBD_DEVICE_VER_MINOR
+#define APP_USBD_DEVICE_VER_MINOR 0
+#endif
+#ifndef APP_USBD_CONFIG_SELF_POWERED
+#define APP_USBD_CONFIG_SELF_POWERED 1
+#endif
+#ifndef APP_USBD_CONFIG_MAX_POWER
+#define APP_USBD_CONFIG_MAX_POWER 100
+#endif
+#ifndef APP_USBD_CONFIG_POWER_EVENTS_PROCESS
+#define APP_USBD_CONFIG_POWER_EVENTS_PROCESS 1
+#endif
+#ifndef APP_USBD_CONFIG_EVENT_QUEUE_ENABLE
+#define APP_USBD_CONFIG_EVENT_QUEUE_ENABLE 1
+#endif
+#ifndef APP_USBD_CONFIG_EVENT_QUEUE_SIZE
+#define APP_USBD_CONFIG_EVENT_QUEUE_SIZE 32
+#endif
+#ifndef APP_USBD_CONFIG_SOF_HANDLING_MODE
+#define APP_USBD_CONFIG_SOF_HANDLING_MODE 1
+#endif
+#ifndef APP_USBD_CONFIG_SOF_TIMESTAMP_PROVIDE
+#define APP_USBD_CONFIG_SOF_TIMESTAMP_PROVIDE 0
+#endif
+#ifndef APP_USBD_CONFIG_DESC_STRING_SIZE
+#define APP_USBD_CONFIG_DESC_STRING_SIZE 31
+#endif
+#ifndef APP_USBD_CONFIG_DESC_STRING_UTF_ENABLED
+#define APP_USBD_CONFIG_DESC_STRING_UTF_ENABLED 0
+#endif
+#ifndef APP_USBD_STRINGS_LANGIDS
+#define APP_USBD_STRINGS_LANGIDS APP_USBD_LANG_AND_SUBLANG(APP_USBD_LANG_ENGLISH, APP_USBD_SUBLANG_ENGLISH_US)
+#endif
+#ifndef APP_USBD_STRING_ID_MANUFACTURER
+#define APP_USBD_STRING_ID_MANUFACTURER 1
+#endif
+#ifndef APP_USBD_STRINGS_MANUFACTURER_EXTERN
+#define APP_USBD_STRINGS_MANUFACTURER_EXTERN 0
+#endif
+#ifndef APP_USBD_STRINGS_MANUFACTURER
+#define APP_USBD_STRINGS_MANUFACTURER APP_USBD_STRING_DESC("Nordic Semiconductor")
+#endif
+#ifndef APP_USBD_STRING_ID_PRODUCT
+#define APP_USBD_STRING_ID_PRODUCT 2
+#endif
+#ifndef APP_USBD_STRINGS_PRODUCT_EXTERN
+#define APP_USBD_STRINGS_PRODUCT_EXTERN 0
+#endif
+#ifndef APP_USBD_STRINGS_PRODUCT
+#define APP_USBD_STRINGS_PRODUCT APP_USBD_STRING_DESC("nRF52 USB CDC Demo")
+#endif
+#ifndef APP_USBD_STRING_ID_SERIAL
+#define APP_USBD_STRING_ID_SERIAL 3
+#endif
+#ifndef APP_USBD_STRING_SERIAL_EXTERN
+#define APP_USBD_STRING_SERIAL_EXTERN 1
+#endif
+#ifndef APP_USBD_STRING_SERIAL
+#define APP_USBD_STRING_SERIAL g_extern_serial_number
+#endif
+#ifndef APP_USBD_STRING_ID_CONFIGURATION
+#define APP_USBD_STRING_ID_CONFIGURATION 4
+#endif
+#ifndef APP_USBD_STRING_CONFIGURATION_EXTERN
+#define APP_USBD_STRING_CONFIGURATION_EXTERN 0
+#endif
+#ifndef APP_USBD_STRINGS_CONFIGURATION
+#define APP_USBD_STRINGS_CONFIGURATION APP_USBD_STRING_DESC("Default configuration")
+#endif
+#ifndef APP_USBD_STRINGS_USER
+#define APP_USBD_STRINGS_USER X(APP_USER_1, , APP_USBD_STRING_DESC("User 1"))
+#endif
+#ifndef APP_USBD_CDC_ACM_ENABLED
+#define APP_USBD_CDC_ACM_ENABLED 1
+#endif
+#ifndef APP_USBD_CDC_ACM_ZLP_ON_EPSIZE_WRITE
+#define APP_USBD_CDC_ACM_ZLP_ON_EPSIZE_WRITE 1
+#endif
+
+#ifndef USBD_CONFIG_LOG_ENABLED
+#define USBD_CONFIG_LOG_ENABLED 0
+#endif
+
+#ifndef APP_USBD_CONFIG_LOG_ENABLED
+#define APP_USBD_CONFIG_LOG_ENABLED 0
+#endif
+
+#ifndef NRFX_WDT_ENABLED
+#define NRFX_WDT_ENABLED 1
+#endif
+
+// <9=> Run in SLEEP and HALT 
+#ifndef NRFX_WDT_CONFIG_BEHAVIOUR
+#define NRFX_WDT_CONFIG_BEHAVIOUR 9
+#endif
+
+// <o> NRFX_WDT_CONFIG_RELOAD_VALUE - Reload value  <15-4294967295> 
+#ifndef NRFX_WDT_CONFIG_RELOAD_VALUE
+#define NRFX_WDT_CONFIG_RELOAD_VALUE 60000 
+#endif
+
+#ifndef NRFX_WDT_CONFIG_NO_IRQ
+#define NRFX_WDT_CONFIG_NO_IRQ 0
+#endif
+
+#ifndef NRFX_WDT_CONFIG_IRQ_PRIORITY
+#define NRFX_WDT_CONFIG_IRQ_PRIORITY 6
+#endif
+
+#ifndef NRFX_WDT_CONFIG_LOG_ENABLED
+#define NRFX_WDT_CONFIG_LOG_ENABLED 0
+#endif
+
+#ifndef WDT_ENABLED
+#define WDT_ENABLED 1
+#endif
+ 
+#ifndef WDT_CONFIG_BEHAVIOUR
+#define WDT_CONFIG_BEHAVIOUR 9
+#endif
+
+#ifndef WDT_CONFIG_RELOAD_VALUE
+#define WDT_CONFIG_RELOAD_VALUE 60000 
+#endif
+
+#ifndef WDT_CONFIG_IRQ_PRIORITY
+#define WDT_CONFIG_IRQ_PRIORITY 6
+#endif
+
+#ifndef WDT_CONFIG_LOG_ENABLED
+#define WDT_CONFIG_LOG_ENABLED 0
+#endif
+
+
 #ifndef NRF_CLOCK_ENABLED
-#define NRF_CLOCK_ENABLED 0
+#define NRF_CLOCK_ENABLED 1
+#endif
+
+#ifndef APP_FIFO_ENABLED
+#define APP_FIFO_ENABLED 1
 #endif
 
 #ifndef CLOCK_CONFIG_LF_SRC
@@ -598,9 +787,9 @@
 // <q> APP_FIFO_ENABLED  - app_fifo - Software FIFO implementation
  
 
-#ifndef APP_FIFO_ENABLED
-#define APP_FIFO_ENABLED 1
-#endif
+// #ifndef APP_FIFO_ENABLED
+// #define APP_FIFO_ENABLED 1
+// #endif
 
 // <e> APP_SCHEDULER_ENABLED - app_scheduler - Events scheduler
 //==========================================================
@@ -2096,57 +2285,6 @@
 
 #ifndef UART_CONFIG_DEBUG_COLOR
 #define UART_CONFIG_DEBUG_COLOR 0
-#endif
-
-// </e>
-
-// <e> WDT_CONFIG_LOG_ENABLED - Enables logging in the module.
-//==========================================================
-#ifndef WDT_CONFIG_LOG_ENABLED
-#define WDT_CONFIG_LOG_ENABLED 0
-#endif
-// <o> WDT_CONFIG_LOG_LEVEL  - Default Severity level
- 
-// <0=> Off 
-// <1=> Error 
-// <2=> Warning 
-// <3=> Info 
-// <4=> Debug 
-
-#ifndef WDT_CONFIG_LOG_LEVEL
-#define WDT_CONFIG_LOG_LEVEL 3
-#endif
-
-// <o> WDT_CONFIG_INFO_COLOR  - ANSI escape code prefix.
- 
-// <0=> Default 
-// <1=> Black 
-// <2=> Red 
-// <3=> Green 
-// <4=> Yellow 
-// <5=> Blue 
-// <6=> Magenta 
-// <7=> Cyan 
-// <8=> White 
-
-#ifndef WDT_CONFIG_INFO_COLOR
-#define WDT_CONFIG_INFO_COLOR 0
-#endif
-
-// <o> WDT_CONFIG_DEBUG_COLOR  - ANSI escape code prefix.
- 
-// <0=> Default 
-// <1=> Black 
-// <2=> Red 
-// <3=> Green 
-// <4=> Yellow 
-// <5=> Blue 
-// <6=> Magenta 
-// <7=> Cyan 
-// <8=> White 
-
-#ifndef WDT_CONFIG_DEBUG_COLOR
-#define WDT_CONFIG_DEBUG_COLOR 0
 #endif
 
 // </e>

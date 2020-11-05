@@ -266,7 +266,7 @@ void auxiliary_tick_handler(uint32_t t) {
   local_clock++;
   nrfx_wdt_feed();
   if (local_clock % 60 == 3) app_sched_event_put(NULL,1,mote_send_clock);
-  if (local_clock % 60 == 5 && (local_clock > 20*60)) 
+  if ((local_clock % 60 == 5) && (local_clock > 20*60)) 
     app_sched_event_put(NULL,1,data_task);
   }
 

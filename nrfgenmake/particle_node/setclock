@@ -3,8 +3,20 @@
 import serial, sys, os, subprocess
 import time, datetime
 
-S = serial.Serial(baudrate=115200,port='/dev/ttyACM0',timeout=0.1) 
+DEVICE = "/dev/ttyACM0"  # change this as needed!
 
+S = False # invalid value if not set 
+for i in range(16):
+  try:
+    S = serial.Serial(baudrate=115200,port=DEVICE,timeout=0.1) 
+    break
+  except serial.serialutil.SerialException:
+    sys.stdout.write("waiting for device {0} (try {1})\n".format(DEVICE,i))
+    time.sleep(1)
+if not S:
+   sys.stderr.write("unable to find {0}, aborting clock set\n".format(DEVICE))
+   sys.exit(1)
+ 
 def injectime():
   '''
   periodically, transmit a time-of-day message to

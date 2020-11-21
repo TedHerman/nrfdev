@@ -181,10 +181,10 @@ void nrf_802154_received_timestamp_raw(uint8_t * p_data, int8_t power,
     nrf_802154_buffer_free_raw(p_data);
     return;
     }
-  if (m->type == 0x36) {
-    memcpy(clock_buffer,m->data,4);
-    app_sched_event_put(NULL,1,&message_clock_set);
-    }
+  //if (m->type == 0x36) {
+  //  memcpy(clock_buffer,m->data,4);
+  //  app_sched_event_put(NULL,1,&message_clock_set);
+  //  }
   if (m->type == 0x37) { 
     data_buffer_rssi = (uint8_t)power;  // save rssi before payload
     memcpy(data_buffer,m->data,PACKET_MAX_PAYLOAD);

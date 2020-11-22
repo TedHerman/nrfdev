@@ -112,6 +112,7 @@ void mote_send_clock(void * parameter, uint16_t size) {
   // perhaps because of the CRC bytes in the fcs?
   sync_message.length =  offsetof(motepacket_t,data) + 2 + 4 - 1;
   t = get_clock();
+  if (t < 1550000000U) return;  // refuse to send invalid clock 
   memcpy(sync_message.data,(uint8_t*)&t,4);
   // NRF_LOG_INFO("broadcast clock %d",t);
   nrf_802154_transmit_raw((uint8_t*)&sync_message,true);
@@ -268,6 +269,10 @@ void auxiliary_tick_handler(uint32_t t) {
   if (local_clock % 60 == 3) app_sched_event_put(NULL,1,mote_send_clock);
   if ((local_clock % 60 == 5) && (local_clock > 20*60)) 
     app_sched_event_put(NULL,1,data_task);
+  if (local_clock % 60 == 7) {
+    uint32_t t = get_clock();
+    if (t < 1550000000U) leds_on();
+    }
   }
 
 void timers_init(void) {

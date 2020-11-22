@@ -448,7 +448,7 @@ APP_TIMER_DEF(second_tick_id);
 static void second_tick_handler(void * p_context) {
   uint32_t t = nrf_atomic_u32_add(&clock,1); // increment current clock and read
   if (t % 60 == 0) app_sched_event_put(NULL,1,&ds3231_read_init);
-  else auxiliary_tick_handler(t);
+  auxiliary_tick_handler(t);
   }
 
 void clockapi_init() {

@@ -10,7 +10,7 @@ def getfile():
   S = subprocess.Popen(cmd,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
   R = S.communicate()
   if not isinstance(R[0],bytes):
-    print("SD card media file not found")
+    sys.stderr.write("SD card media file not found\n")
     sys.exit(1)
   L = R[0].split()
   F = None
@@ -20,7 +20,7 @@ def getfile():
       F = candidate
       break
   if not F: 
-    print("SD card media file not found")
+    print("SD card media file not found\n")
     sys.exit(1)
   with open(F,'rb') as V:
     return V.read()  # entire content of file
@@ -39,10 +39,14 @@ def procrec(P,offset):
   moteid = p[4] 
   result += "<- badge {0:02d} @ {1} ".format(moteid,ptime)
   numrep = p[5]
+  if numrep > 6:
+     sys.stderr.write("corrupted data error\n")
+     raise ValueError
   newoffset = 11  # where the variable stuff starts 
   for i in range(numrep):
     other,rssi = P[offset+newoffset+i*2],P[offset+newoffset+i*2+1]
     result += "[{0}:{1}] ".format(other,rssi)
+  # sys.stdout.write(result + "\n")
   sys.stdout.write(result + "\n")
   return newoffset + 2*numrep
 
@@ -60,7 +64,11 @@ def convert():
     S = bytearray(R)    # make processing easy with array of int
     if not S: continue  # first element of split is empty (fence at begin) 
     n = S[1]*256 + S[0] # node ID  
-    print("NODE",n)
-    procblock(S[2:])
+    nodemsg = "NODE {0}\n".format(n)
+    sys.stdout.write(nodemsg)
+    try:
+      procblock(S[2:])
+    except ValueError:
+      pass
 
 convert()

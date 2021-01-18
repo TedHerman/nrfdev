@@ -83,6 +83,8 @@ uint8_t buffer[sizeof(motepacket_t)];
 motepacket_t * p = (motepacket_t *)&buffer;
 
 // const int8_t  powervalues[] = {-30,-20,-16,-12,-8,-4,0,4};
+// in the stack, says {-40,-20,-16,-12,-8,-4,0,2,3,4,5,6,7,8} but is really?
+// nrf_802154_tx_power_set(int8_t power)
 const uint8_t extended_address[] = {0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef};
 const uint8_t short_address[]    = {0x06, 0x07};
 const uint8_t pan_id[]           = {0x04, 0x05};
